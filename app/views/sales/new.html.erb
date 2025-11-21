@@ -350,6 +350,74 @@
       margin: 20px auto;
     }
     
+    /* Receipt Section Styles */
+    .receipt-section {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 2px solid #e9ecef;
+    }
+    
+    .receipt-preview {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-family: monospace;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 15px;
+      border-bottom: 2px dashed #e9ecef;
+      padding-bottom: 10px;
+    }
+    
+    .receipt-items {
+      margin-bottom: 15px;
+      border-bottom: 1px dashed #e9ecef;
+      padding-bottom: 10px;
+    }
+    
+    .receipt-item-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .receipt-item-header {
+      font-weight: bold;
+      border-bottom: 1px solid #e9ecef;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+    
+    .receipt-totals {
+      text-align: right;
+      margin-bottom: 15px;
+    }
+    
+    .receipt-grand-total {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 2px solid #28a745;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    
+    .receipt-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn-full {
+      flex: 1;
+    }
+    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -363,6 +431,10 @@
       .right-panel {
         border-left: none;
         border-top: 2px solid #e9ecef;
+      }
+      
+      .receipt-actions {
+        flex-direction: column;
       }
     }
   </style>
@@ -486,10 +558,85 @@
       <button id="checkoutBtn" class="checkout-btn" disabled>
         ✅ COMPLETE SALE
       </button>
+      
+      <!-- Receipt Verification Section -->
+      <div id="receiptSection" class="receipt-section">
+        <h3 style="margin-bottom: 15px; color: #2c3e50;">📋 Sale Verification</h3>
+        
+        <!-- Receipt Preview -->
+        <div id="receiptPreview" class="receipt-preview">
+          <div class="receipt-header">
+            <h4 style="margin: 0; color: #2c3e50;">INVOICE</h4>
+            <p style="margin: 5px 0; color: #6c757d; font-size: 12px;" id="receiptDate">Date: Loading...</p>
+          </div>
+          
+          <!-- Customer Info -->
+          <div style="margin-bottom: 15px;">
+            <strong>Customer:</strong> 
+            <span id="receiptCustomer">Walk-in Customer</span>
+          </div>
+          
+          <!-- Items List -->
+          <div class="receipt-items">
+            <div class="receipt-item-row receipt-item-header">
+              <span>Item</span>
+              <span>Qty × Price</span>
+              <span>Total</span>
+            </div>
+            <div id="receiptItems"></div>
+          </div>
+          
+          <!-- Totals -->
+          <div class="receipt-totals">
+            <div class="receipt-item-row">
+              <span>Subtotal:</span>
+              <span id="receiptSubtotal">Rs. 0.00</span>
+            </div>
+            <div class="receipt-item-row">
+              <span>Discount:</span>
+              <span id="receiptDiscount">Rs. 0.00</span>
+            </div>
+            <div class="receipt-item-row">
+              <span>Tax:</span>
+              <span id="receiptTax">Rs. 0.00</span>
+            </div>
+            <div class="receipt-item-row receipt-grand-total">
+              <span>GRAND TOTAL:</span>
+              <span id="receiptGrandTotal" style="color: #28a745;">Rs. 0.00</span>
+            </div>
+          </div>
+          
+          <!-- Payment Method -->
+          <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #e9ecef;">
+            <strong>Payment Method:</strong> 
+            <span id="receiptPaymentMethod" style="margin-left: 10px;">Cash</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="receipt-actions">
+          <button id="confirmSaleBtn" class="btn btn-success btn-full">
+            ✅ Confirm & Complete Sale
+          </button>
+          <button id="cancelSaleBtn" class="btn btn-danger">
+            ❌ Cancel
+          </button>
+        </div>
+      </div>
     </div>
-    
   </div>
 </div>
+
+<!-- Hidden Form -->
+<form id="saleForm" method="POST" action="/sales" style="display: none;">
+  <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+  <input type="hidden" id="form_customer_id" name="sale[customer_id]">
+  <input type="hidden" id="form_payment_method" name="sale[payment_method]">
+  <input type="hidden" id="form_discount_cents" name="sale[discount_cents]">
+  <input type="hidden" id="form_tax_cents" name="sale[tax_cents]">
+  <input type="hidden" id="form_total_cents" name="sale[total_cents]">
+  <div id="form_sale_items"></div>
+</form>
 
 <script>
 // POS System JavaScript
@@ -701,62 +848,182 @@ class POSSystem {
       this.showAlert('Cart is empty!', 'error');
       return;
     }
+
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+    const tax = parseFloat(document.getElementById('tax').value) || 0;
+    const subtotal = this.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    const total = Math.max(0, subtotal - discount + tax);
+
+    // Show receipt verification instead of direct checkout
+    this.showReceiptVerification();
+  }
+
+  showReceiptVerification() {
+    // Update receipt preview with current data
+    this.updateReceiptPreview();
     
+    // Show receipt section
+    document.getElementById('receiptSection').style.display = 'block';
+    
+    // Scroll to receipt section
+    document.getElementById('receiptSection').scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'center'
+    });
+    
+    // Setup event listeners for receipt actions
+    this.setupReceiptEventListeners();
+  }
+
+  updateReceiptPreview() {
     const discount = parseFloat(document.getElementById('discount').value) || 0;
     const tax = parseFloat(document.getElementById('tax').value) || 0;
     const subtotal = this.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     const total = Math.max(0, subtotal - discount + tax);
     
-    if (!confirm(`Complete sale for Rs. ${total.toFixed(2)}?`)) {
-      return;
-    }
+    // Update date
+    const now = new Date();
+    document.getElementById('receiptDate').textContent = 
+      `Date: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
     
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = '⏳ Processing...';
+    // Update customer
+    const customerSelect = document.getElementById('customerSelect');
+    const selectedCustomer = customerSelect.options[customerSelect.selectedIndex];
+    document.getElementById('receiptCustomer').textContent = 
+      selectedCustomer.text || 'Walk-in Customer';
     
+    // Update items
+    const receiptItems = document.getElementById('receiptItems');
+    receiptItems.innerHTML = this.cart.map(item => `
+      <div class="receipt-item-row">
+        <span style="flex: 2;">${item.product.name}</span>
+        <span style="flex: 1; text-align: center;">${item.quantity} × Rs. ${item.unit_price.toFixed(2)}</span>
+        <span style="flex: 1; text-align: right;">Rs. ${(item.quantity * item.unit_price).toFixed(2)}</span>
+      </div>
+    `).join('');
+    
+    // Update totals
+    document.getElementById('receiptSubtotal').textContent = `Rs. ${subtotal.toFixed(2)}`;
+    document.getElementById('receiptDiscount').textContent = `Rs. ${discount.toFixed(2)}`;
+    document.getElementById('receiptTax').textContent = `Rs. ${tax.toFixed(2)}`;
+    document.getElementById('receiptGrandTotal').textContent = `Rs. ${total.toFixed(2)}`;
+    
+    // Update payment method
+    document.getElementById('receiptPaymentMethod').textContent = 
+      this.selectedPaymentMethod.charAt(0).toUpperCase() + this.selectedPaymentMethod.slice(1);
+  }
+
+  setupReceiptEventListeners() {
+    // Remove existing listeners to prevent duplicates
+    document.getElementById('confirmSaleBtn').replaceWith(document.getElementById('confirmSaleBtn').cloneNode(true));
+    document.getElementById('cancelSaleBtn').replaceWith(document.getElementById('cancelSaleBtn').cloneNode(true));
+    
+    // Add new listeners
+    document.getElementById('confirmSaleBtn').addEventListener('click', () => this.confirmSale());
+    document.getElementById('cancelSaleBtn').addEventListener('click', () => this.cancelSale());
+  }
+
+  async confirmSale() {
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+    const tax = parseFloat(document.getElementById('tax').value) || 0;
+    const subtotal = this.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    const total = Math.max(0, subtotal - discount + tax);
+
+    // Show loading state
+    const confirmBtn = document.getElementById('confirmSaleBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '⏳ Processing...';
+
     try {
-      const saleData = {
-        sale: {
-          customer_id: document.getElementById('customerSelect').value || null,
-          payment_method: this.selectedPaymentMethod,
-          discount_cents: Math.round(discount * 100),
-          tax_cents: Math.round(tax * 100),
-          total_cents: Math.round(total * 100),
-          sale_items_attributes: this.cart.map(item => ({
-            product_id: item.product.id,
-            qty: item.quantity,
-            unit_price_cents: Math.round(item.unit_price * 100)
-          }))
-        }
-      };
+      // Prepare form data
+      this.prepareFormData();
+
+      // Submit the form via AJAX
+      const response = await this.submitForm();
       
-      const response = await fetch('/sales', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify(saleData)
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        this.showAlert('Sale completed successfully!', 'success');
-        setTimeout(() => {
-          window.location.href = result.redirect_url;
-        }, 1000);
+      if (response.success) {
+        this.handleSaleSuccess(response);
       } else {
-        throw new Error(result.message || 'Sale failed');
+        throw new Error(response.message || 'Sale failed');
       }
     } catch (error) {
       this.showAlert(`Error: ${error.message}`, 'error');
-      checkoutBtn.disabled = false;
-      checkoutBtn.textContent = '✅ COMPLETE SALE';
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = '✅ Confirm & Complete Sale';
     }
   }
-  
+
+  prepareFormData() {
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+    const tax = parseFloat(document.getElementById('tax').value) || 0;
+    const subtotal = this.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    const total = Math.max(0, subtotal - discount + tax);
+    
+    // Set form values
+    document.getElementById('form_customer_id').value = document.getElementById('customerSelect').value || '';
+    document.getElementById('form_payment_method').value = this.selectedPaymentMethod;
+    document.getElementById('form_discount_cents').value = Math.round(discount * 100);
+    document.getElementById('form_tax_cents').value = Math.round(tax * 100);
+    document.getElementById('form_total_cents').value = Math.round(total * 100);
+    
+    // Prepare sale items
+    const formSaleItems = document.getElementById('form_sale_items');
+    formSaleItems.innerHTML = this.cart.map((item, index) => `
+      <input type="hidden" name="sale[sale_items_attributes][${index}][product_id]" value="${item.product.id}">
+      <input type="hidden" name="sale[sale_items_attributes][${index}][qty]" value="${item.quantity}">
+      <input type="hidden" name="sale[sale_items_attributes][${index}][unit_price_cents]" value="${Math.round(item.unit_price * 100)}">
+    `).join('');
+  }
+
+  async submitForm() {
+    const form = document.getElementById('saleForm');
+    const formData = new FormData(form);
+
+    const response = await fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+        'Accept': 'application/json'
+      }
+    });
+
+    return await response.json();
+  }
+
+  handleSaleSuccess(result) {
+    // Show success message
+    this.showAlert('Sale completed successfully! Receipt has been generated.', 'success');
+    
+    // Hide receipt section
+    document.getElementById('receiptSection').style.display = 'none';
+    
+    // Reset cart and UI
+    this.cart = [];
+    this.updateUI();
+    
+    // Reset form fields
+    document.getElementById('discount').value = '0';
+    document.getElementById('tax').value = '0';
+    
+    // Enable print receipt functionality
+    if (result.redirect_url) {
+      setTimeout(() => {
+        if (confirm('Sale completed! Would you like to view the receipt?')) {
+          window.open(result.redirect_url, '_blank');
+        }
+      }, 1000);
+    }
+  }
+
+  cancelSale() {
+    // Hide receipt section
+    document.getElementById('receiptSection').style.display = 'none';
+    
+    // Show confirmation message
+    this.showAlert('Sale verification cancelled', 'error');
+  }
+
   showAlert(message, type) {
     const alertContainer = document.getElementById('alertContainer');
     const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
