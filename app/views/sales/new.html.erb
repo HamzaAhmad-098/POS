@@ -3,793 +3,551 @@
 <html>
 <head>
   <title>New Sale - POS System</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Include QuaggaJS for barcode scanning -->
-  <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <%= csrf_meta_tags %>
+  <!-- Use Html5-Qrcode for mobile barcode scanning as per products/new -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f7fa;
-      min-height: 100vh;
-    }
-    
-    .pos-container {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      height: 100vh;
-      overflow: hidden;
-    }
-    
-    .left-panel {
-      background: white;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    
-    .right-panel {
       background: #f8f9fa;
-      padding: 20px;
-      border-left: 2px solid #e9ecef;
-      overflow-y: auto;
+      min-height: 100vh;
+      line-height: 1.6;
     }
-    
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #e9ecef;
-    }
-    
-    .header h1 {
-      font-size: 24px;
-      color: #2c3e50;
-    }
-    
-    .cart-badge {
-      background: #28a745;
-      color: white;
-      padding: 5px 15px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-    
-    .search-section {
+    .mobile-container {
+      min-height: 100vh;
       background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
     }
-    
-    .search-input-group {
+    .mobile-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .mobile-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .header-actions {
       display: flex;
       gap: 10px;
-      margin-bottom: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
-    
-    .search-input {
-      flex: 1;
-      padding: 15px;
-      border: 2px solid #e9ecef;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    
-    .search-input:focus {
-      outline: none;
-      border-color: #007bff;
-    }
-    
     .btn {
-      padding: 12px 24px;
+      padding: 14px 20px;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .btn-primary {
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 50px;
       background: #007bff;
       color: white;
+      box-shadow: 0 4px 15px rgba(0,123,255,0.10);
     }
-    
-    .btn-primary:hover { background: #0056b3; }
-    
-    .btn-success {
-      background: #28a745;
-      color: white;
+    .btn-sm { padding: 12px 16px; min-height: 44px; font-size: 14px; }
+    .btn-info { background: #17a2b8; color: white; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-warning { background: #ffc107; color: #212529; }
+    .btn-primary { background: #007bff; color: white; }
+    .main-content {
+      padding: 20px 8px 90px 8px;
+      max-width: 500px;
+      margin: 0 auto;
+      width: 100%;
     }
-    
-    .btn-success:hover { background: #218838; }
-    
-    .btn-danger {
-      background: #dc3545;
-      color: white;
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
     }
-    
-    .btn-info {
-      background: #17a2b8;
-      color: white;
-    }
-    
-    .btn-info:hover { background: #138496; }
-    
-    .btn-warning {
-      background: #ffc107;
-      color: #212529;
-    }
-    
-    .btn-warning:hover { background: #e0a800; }
-    
-    .search-results {
+    .action-card {
       background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-top: 10px;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    
-    .search-result-item {
-      padding: 15px;
-      border-bottom: 1px solid #e9ecef;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      border: 2px solid #e9ecef;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.3s;
+      min-height: 70px;
     }
-    
-    .search-result-item:hover {
-      background: #f8f9fa;
+    .action-card:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
-    
-    .product-info h4 {
-      margin-bottom: 5px;
-      color: #2c3e50;
-    }
-    
-    .product-meta {
-      color: #6c757d;
-      font-size: 14px;
-    }
-    
-    .stock-badge {
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    
-    .stock-ok { background: #d4edda; color: #155724; }
-    .stock-low { background: #fff3cd; color: #856404; }
-    .stock-out { background: #f8d7da; color: #721c24; }
-    
-    .cart-section {
-      background: white;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .cart-header {
+    .action-icon { font-size: 32px; margin-bottom: 8px; }
+    .action-text { font-weight: 600; color: #2c3e50; font-size: 15px;}
+    .section-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #f8f9fa;
+    }
+    .section-header h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+    }
+    .section-icon {
+      font-size: 22px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #2c3e50; font-size: 15px;}
+    .form-control {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 16px;
+      background: #f8f9fa;
+      transition: all 0.3s;
+      -webkit-appearance: none;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: #007bff;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.08);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
       margin-bottom: 15px;
     }
-    
-    .empty-cart {
-      text-align: center;
-      padding: 40px 20px;
-      color: #6c757d;
-    }
-    
-    .cart-item {
-      padding: 15px;
-      border-bottom: 1px solid #e9ecef;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .item-details h5 {
-      margin-bottom: 5px;
-      color: #2c3e50;
-    }
-    
-    .quantity-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .qty-btn {
-      width: 32px;
-      height: 32px;
-      border: 2px solid #007bff;
+    .form-actions {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
       background: white;
-      color: #007bff;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
+      padding: 16px 8px;
+      border-top: 1px solid #e9ecef;
+      box-shadow: 0 -2px 16px rgba(0,0,0,0.04);
     }
-    
-    .qty-btn:hover {
-      background: #007bff;
-      color: white;
+    .action-buttons {
+      display: flex;
+      gap: 8px;
     }
-    
-    .qty-display {
-      min-width: 40px;
-      text-align: center;
-      font-weight: bold;
-    }
-    
-    .remove-btn {
-      background: #dc3545;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    
+    .action-buttons .btn { flex: 1; }
+    .cart-section,
     .checkout-section {
       background: white;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 16px;
+      padding: 20px 15px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      border: 1px solid #e9ecef;
     }
-    
     .totals {
-      margin-bottom: 20px;
+      margin-bottom: 8px;
     }
-    
     .total-row {
       display: flex;
       justify-content: space-between;
-      padding: 10px 0;
+      padding: 6px 0;
       border-bottom: 1px solid #e9ecef;
+      font-size: 15px;
+      font-weight: 500;
     }
-    
     .total-row.grand-total {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
       color: #28a745;
       border-top: 2px solid #28a745;
-      margin-top: 10px;
-      padding-top: 15px;
+      margin-top: 8px;
+      padding-top: 12px;
     }
-    
-    .form-group {
-      margin-bottom: 15px;
-    }
-    
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-      color: #2c3e50;
-    }
-    
-    .form-control {
-      width: 100%;
-      padding: 10px;
-      border: 2px solid #e9ecef;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    
-    .payment-methods {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    
-    .payment-option {
-      padding: 12px;
-      border: 2px solid #e9ecef;
-      border-radius: 8px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .payment-option.active {
-      border-color: #28a745;
-      background: #d4edda;
-    }
-    
-    .checkout-btn {
-      width: 100%;
-      padding: 16px;
-      font-size: 18px;
-      font-weight: bold;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .checkout-btn:disabled {
-      background: #6c757d;
-      cursor: not-allowed;
-    }
-    
-    .checkout-btn:not(:disabled):hover {
-      background: #218838;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(40,167,69,0.3);
-    }
-    
-    .alert {
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-    
-    .alert-error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    
-    .alert-success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    
-    .alert-info {
-      background: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: #6c757d;
-    }
-    
     .spinner {
       border: 3px solid #f3f3f3;
       border-top: 3px solid #007bff;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    
-    /* Receipt Section Styles */
-    .receipt-section {
-      display: none;
-      margin-top: 20px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border: 2px solid #e9ecef;
-    }
-    
-    .receipt-preview {
-      background: white;
-      padding: 15px;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      font-family: monospace;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .receipt-header {
-      text-align: center;
-      margin-bottom: 15px;
-      border-bottom: 2px dashed #e9ecef;
-      padding-bottom: 10px;
-    }
-    
-    .receipt-items {
-      margin-bottom: 15px;
-      border-bottom: 1px dashed #e9ecef;
-      padding-bottom: 10px;
-    }
-    
-    .receipt-item-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-    
-    .receipt-item-header {
-      font-weight: bold;
-      border-bottom: 1px solid #e9ecef;
-      padding-bottom: 5px;
-      margin-bottom: 10px;
-    }
-    
-    .receipt-totals {
-      text-align: right;
-      margin-bottom: 15px;
-    }
-    
-    .receipt-grand-total {
       margin-top: 10px;
-      padding-top: 10px;
-      border-top: 2px solid #28a745;
-      font-weight: bold;
-      font-size: 16px;
+      margin-bottom: 7px;
     }
-    
-    .receipt-actions {
-      display: flex;
-      gap: 10px;
-    }
-    
-    .btn-full {
-      flex: 1;
-    }
-    
-    /* Barcode Scanner Styles */
-    .scanner-section {
-      display: none;
-      margin-top: 15px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border: 2px solid #e9ecef;
-    }
-    
-    .scanner-container {
-      position: relative;
-      width: 100%;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    
-    #barcode-scanner {
-      width: 100%;
-      height: 300px;
-      background: #000;
-      border-radius: 8px;
-    }
-    
-    .scanner-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      background: rgba(0, 0, 0, 0.5);
-    }
-    
-    .scanner-controls {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-      justify-content: center;
-    }
-    
-    .scanner-frame {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 70%;
-      height: 150px;
-      border: 2px solid #28a745;
-      border-radius: 8px;
-      box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.3);
-    }
-    
-    .scanner-loading {
-      text-align: center;
-      padding: 20px;
-    }
-    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    
+    .alert {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+    .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+    .cart-item {
+      padding: 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e9ecef;
+      font-size: 15px;
+    }
+    .cart-item:last-child { border-bottom: none; }
+    .item-details h5 { margin: 0 0 2px 0; color: #2c3e50; font-size: 15px; }
+    .quantity-controls { display: flex; align-items: center; gap: 8px;}
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #007bff;
+      background: white;
+      color: #007bff;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .qty-btn:hover {
+      background: #007bff;
+      color: white;
+    }
+    .qty-display {
+      min-width: 28px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .remove-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .empty-cart {
+      text-align: center;
+      padding: 25px 8px;
+      color: #6c757d;
+      font-size: 15px;
+    }
+    .empty-cart p { font-size: 40px; margin-bottom: 6px; }
+    .btn-full { flex: 1; }
+
+    /* Scanner Section - mobile overlay style */
+    .scanner-section {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: black;
+      z-index: 10000;
+      flex-direction: column;
+    }
+    .scanner-header {
+      background: rgba(0,0,0,0.9);
+      color: white;
+      padding: 18px;
+      text-align: center;
+      z-index: 10001;
+    }
+    #qr-reader {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Scanner frame overlay, corners, etc as in product add */
+    .scanner-frame-overlay {
+      position: absolute;
+      top:0; left:0; width:100%; height:100%;
+      pointer-events: none;
+      z-index: 10001;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .scanner-frame {
+      width: 70vw;
+      max-width: 300px;
+      height: 150px;
+      border: 3px solid #28a745;
+      border-radius: 14px;
+      position: relative;
+      box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.4);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { border-color: #28a745;}
+      50% { border-color: #20c997;}
+    }
+    .scanner-corners { position: absolute; width: 100%; height: 100%; }
+    .corner { position: absolute; width: 26px; height: 26px; border: 4px solid #28a745;}
+    .corner.top-left { top: -3px; left: -3px; border-right:none; border-bottom:none;}
+    .corner.top-right { top:-3px;right:-3px; border-left:none;border-bottom:none;}
+    .corner.bottom-left { bottom:-3px;left:-3px;border-right:none;border-top:none;}
+    .corner.bottom-right { bottom:-3px;right:-3px;border-left:none;border-top:none;}
+    .scanner-hint {
+      color: white;
+      margin-top: 18px;
+      font-size: 14px;
+      text-align: center;
+      background: rgba(0,0,0,0.7);
+      padding: 11px 16px;
+      border-radius: 19px;
+      font-weight: 500;
+    }
+    .scanner-controls {
+      display: flex;
+      gap: 13px;
+      padding: 14px;
+      background: rgba(0,0,0,0.97);
+      z-index: 10001;
+    }
+    .scanner-controls .btn { flex:1;}
     @media (max-width: 768px) {
-      .pos-container {
-        grid-template-columns: 1fr;
-      }
-      
-      .right-panel {
-        border-left: none;
-        border-top: 2px solid #e9ecef;
-      }
-      
-      .receipt-actions {
-        flex-direction: column;
-      }
-      
-      .scanner-controls {
-        flex-direction: column;
-      }
-      
-      #barcode-scanner {
-        height: 250px;
-      }
+      .main-content, .form-actions { max-width: 100vw; }
+      .form-row { grid-template-columns: 1fr; }
+      .scanner-frame { width: 95vw; height: 130px; }
+      body, .mobile-container { min-height: 100vh; }
     }
   </style>
 </head>
 <body>
-
-<div class="pos-container">
-  <!-- LEFT PANEL -->
-  <div class="left-panel">
-    <div class="header">
+  <div class="mobile-container">
+    <div class="mobile-header">
       <h1>🛒 New Sale</h1>
-      <span class="cart-badge" id="cartBadge">0 items</span>
-    </div>
-    
-    <div id="alertContainer"></div>
-    
-    <!-- Search Section -->
-    <div class="search-section">
-      <div class="search-input-group">
-        <input 
-          type="text" 
-          id="searchInput" 
-          class="search-input" 
-          placeholder="🔍 Search product by name or barcode..."
-          autocomplete="off"
-        >
-        <button class="btn btn-primary" id="searchBtn">Search</button>
-        <button class="btn btn-info" id="scanBtn">📷 Scan Barcode</button>
+      <div class="header-actions">
+        <a href="/sales" class="btn btn-sm btn-primary">← Sales</a>
       </div>
-      
-      <!-- Barcode Scanner Section -->
-      <div id="scannerSection" class="scanner-section">
-        <div class="scanner-container">
-          <div id="barcode-scanner"></div>
-          <div class="scanner-frame"></div>
-          <div class="scanner-overlay">
-            <h3 style="color: white; margin-bottom: 10px;">Barcode Scanner</h3>
-            <p style="color: white; text-align: center;">Point camera at barcode</p>
-            <div id="scannerStatus" class="scanner-loading">
-              <div class="spinner"></div>
-              <p>Initializing camera...</p>
-            </div>
-          </div>
+    </div>
+    <div class="main-content">
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <div class="action-card" onclick="saleForm.openScanner()">
+          <div class="action-icon">📷</div>
+          <div class="action-text">Scan Barcode</div>
         </div>
-        <div class="scanner-controls">
-          <button class="btn btn-success" id="stopScannerBtn">Stop Scanner</button>
-          <button class="btn btn-warning" id="switchCameraBtn">Switch Camera</button>
+        <div class="action-card" onclick="saleForm.clearCart()">
+          <div class="action-icon">🗑️</div>
+          <div class="action-text">Clear Cart</div>
         </div>
       </div>
-      
-      <div id="searchResults" style="display: none;"></div>
-    </div>
-    
-    <!-- Cart Section -->
-    <div class="cart-section">
-      <div class="cart-header">
-        <h2>Cart Items</h2>
-        <button class="btn btn-danger" id="clearCartBtn" style="display: none;">Clear All</button>
-      </div>
-      
-      <div id="emptyCart" class="empty-cart">
-        <p style="font-size: 48px;">🛒</p>
-        <h3>Your cart is empty</h3>
-        <p>Search for products or scan barcodes to add them</p>
-      </div>
-      
-      <div id="cartItems" style="display: none;"></div>
-    </div>
-  </div>
-  
-  <!-- RIGHT PANEL -->
-  <div class="right-panel">
-    <div class="checkout-section">
-      <h2 style="margin-bottom: 20px;">💵 Checkout</h2>
-      
-      <!-- Totals -->
-      <div class="totals">
-        <div class="total-row">
-          <span>Subtotal:</span>
-          <span id="subtotal">Rs. 0.00</span>
+      <div id="alertContainer"></div>
+      <!-- Search Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon">🔍</div>
+          <h3>Scan or Search Product</h3>
         </div>
-        
-        <div class="total-row">
-          <span>Discount:</span>
+        <div class="form-group">
           <input 
-            type="number" 
-            id="discount" 
-            value="0" 
-            min="0" 
-            step="0.01" 
-            style="width: 120px; text-align: right;"
+            type="text" 
+            id="searchInput"
             class="form-control"
+            placeholder="Search product by name or barcode..."
+            autocomplete="off"
           >
         </div>
-        
-        <div class="total-row">
-          <span>Tax:</span>
-          <input 
-            type="number" 
-            id="tax" 
-            value="0" 
-            min="0" 
-            step="0.01" 
-            style="width: 120px; text-align: right;"
-            class="form-control"
-          >
+        <div class="action-buttons">
+          <button class="btn btn-info btn-sm" id="searchBtn">Search</button>
+          <button class="btn btn-success btn-sm" onclick="saleForm.openScanner()" id="scanBtn">📷 Scan</button>
         </div>
-        
-        <div class="total-row grand-total">
-          <span>TOTAL:</span>
-          <span id="grandTotal">Rs. 0.00</span>
+        <div id="searchResults" style="margin-top:10px;display:none;"></div>
+      </div>
+      <!-- Cart Section -->
+      <div class="cart-section">
+        <div class="section-header">
+          <div class="section-icon">🛍️</div>
+          <h3>
+            Cart Items 
+            <span style="font-size:14px;color:#28a745" id="cartBadge">0 items</span>
+          </h3>
         </div>
+        <div id="emptyCart" class="empty-cart">
+          <p>🛒</p>
+          <div>Your cart is empty.<br>Search or scan product to add</div>
+        </div>
+        <div id="cartItems" style="display:none;"></div>
       </div>
-      
-      <!-- Customer Selection -->
-      <div class="form-group">
-        <label>Customer</label>
-        <select id="customerSelect" class="form-control">
-          <option value="">Walk-in Customer</option>
-        </select>
-      </div>
-      
-      <!-- Payment Methods -->
-      <div class="form-group">
-        <label>Payment Method</label>
-        <div class="payment-methods">
-          <div class="payment-option active" data-method="cash">
-            💵 Cash
+      <!-- Checkout Section -->
+      <div class="checkout-section">
+        <div class="section-header">
+          <div class="section-icon">💵</div>
+          <h3>Checkout</h3>
+        </div>
+        <div class="totals">
+          <div class="total-row">
+            <span>Subtotal:</span>
+            <span id="subtotal">Rs. 0.00</span>
           </div>
-          <div class="payment-option" data-method="card">
-            💳 Card
+          <div class="total-row">
+            <span>Discount:</span>
+            <input 
+              type="number" 
+              id="discount" 
+              value="0" 
+              min="0" 
+              step="0.01"
+              style="width:90px;text-align:right"
+              class="form-control"
+            >
           </div>
-          <div class="payment-option" data-method="jazzcash">
-            📱 JazzCash
+          <div class="total-row">
+            <span>Tax:</span>
+            <input 
+              type="number"
+              id="tax"
+              value="0"
+              min="0"
+              step="0.01"
+              style="width:90px;text-align:right"
+              class="form-control"
+            >
           </div>
-          <div class="payment-option" data-method="easypaisa">
-            📱 EasyPaisa
+          <div class="total-row grand-total">
+            <span>TOTAL:</span>
+            <span id="grandTotal">Rs. 0.00</span>
           </div>
         </div>
+        <div class="form-group">
+          <label>Customer</label>
+          <select id="customerSelect" class="form-control">
+            <option value="">Walk-in Customer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Payment Method</label>
+          <div class="action-buttons">
+            <button class="btn btn-success btn-sm payment-option active" data-method="cash">💵 Cash</button>
+            <button class="btn btn-info btn-sm payment-option" data-method="card">💳 Card</button>
+            <button class="btn btn-warning btn-sm payment-option" data-method="jazzcash">📱 JazzCash</button>
+            <button class="btn btn-warning btn-sm payment-option" data-method="easypaisa">📱 EasyPaisa</button>
+          </div>
+        </div>
+        <button id="checkoutBtn" class="btn btn-success btn-full" disabled>
+          ✅ COMPLETE SALE
+        </button>
       </div>
-      
-      <!-- Checkout Button -->
-      <button id="checkoutBtn" class="checkout-btn" disabled>
-        ✅ COMPLETE SALE
-      </button>
-      
       <!-- Receipt Verification Section -->
-      <div id="receiptSection" class="receipt-section">
-        <h3 style="margin-bottom: 15px; color: #2c3e50;">📋 Sale Verification</h3>
-        
-        <!-- Receipt Preview -->
-        <div id="receiptPreview" class="receipt-preview">
-          <div class="receipt-header">
-            <h4 style="margin: 0; color: #2c3e50;">INVOICE</h4>
-            <p style="margin: 5px 0; color: #6c757d; font-size: 12px;" id="receiptDate">Date: Loading...</p>
+      <div id="receiptSection" class="form-section" style="display:none;">
+        <h3 style="margin-bottom: 12px; color: #2c3e50;">📋 Sale Verification</h3>
+        <div id="receiptPreview" style="background:#f8f9fa; padding:10px 7px;border-radius:6px;margin-bottom:10px; font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,0.07);font-family:monospace;">
+          <div style="text-align:center; margin-bottom:8px;border-bottom:2px dashed #e9ecef; padding-bottom:7px;">
+            <strong>INVOICE</strong>
+            <p style="margin: 3px 0;font-size:12px;color: #6c757d;" id="receiptDate">Date: Loading...</p>
           </div>
-          
-          <!-- Customer Info -->
-          <div style="margin-bottom: 15px;">
-            <strong>Customer:</strong> 
+          <div style="margin-bottom: 10px;">
+            <strong>Customer:</strong>
             <span id="receiptCustomer">Walk-in Customer</span>
           </div>
-          
-          <!-- Items List -->
-          <div class="receipt-items">
-            <div class="receipt-item-row receipt-item-header">
-              <span>Item</span>
-              <span>Qty × Price</span>
-              <span>Total</span>
-            </div>
+          <div>
+            <div style="font-weight:bold; border-bottom:1px solid #e9ecef;padding-bottom:2px;margin-bottom:7px;">Item &nbsp;&nbsp; Qty×Price &nbsp; Total</div>
             <div id="receiptItems"></div>
           </div>
-          
-          <!-- Totals -->
-          <div class="receipt-totals">
-            <div class="receipt-item-row">
-              <span>Subtotal:</span>
-              <span id="receiptSubtotal">Rs. 0.00</span>
-            </div>
-            <div class="receipt-item-row">
-              <span>Discount:</span>
-              <span id="receiptDiscount">Rs. 0.00</span>
-            </div>
-            <div class="receipt-item-row">
-              <span>Tax:</span>
-              <span id="receiptTax">Rs. 0.00</span>
-            </div>
-            <div class="receipt-item-row receipt-grand-total">
-              <span>GRAND TOTAL:</span>
-              <span id="receiptGrandTotal" style="color: #28a745;">Rs. 0.00</span>
-            </div>
+          <div style="text-align:right; margin-bottom:7px;">
+            <span>Subtotal:</span> <span id="receiptSubtotal"></span><br>
+            <span>Discount:</span> <span id="receiptDiscount"></span><br>
+            <span>Tax:</span> <span id="receiptTax"></span><br>
+            <span style="font-weight:bold;color:#28a745;">GRAND TOTAL:</span>
+            <span id="receiptGrandTotal" style="color:#28a745;"></span>
           </div>
-          
-          <!-- Payment Method -->
-          <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #e9ecef;">
-            <strong>Payment Method:</strong> 
-            <span id="receiptPaymentMethod" style="margin-left: 10px;">Cash</span>
+          <div style="margin-top:8px; border-top:1px dashed #e9ecef; padding-top:5px;">
+            <strong>Payment Method:</strong>
+            <span id="receiptPaymentMethod"></span>
           </div>
         </div>
-
-        <!-- Action Buttons -->
-        <div class="receipt-actions">
-          <button id="confirmSaleBtn" class="btn btn-success btn-full">
-            ✅ Confirm & Complete Sale
-          </button>
-          <button id="cancelSaleBtn" class="btn btn-danger">
-            ❌ Cancel
-          </button>
+        <div class="action-buttons">
+          <button id="confirmSaleBtn" class="btn btn-success btn-full">✅ Confirm & Complete Sale</button>
+          <button id="cancelSaleBtn" class="btn btn-danger">❌ Cancel</button>
         </div>
       </div>
     </div>
   </div>
-</div>
-
-<!-- Hidden Form -->
-<form id="saleForm" method="POST" action="/sales" style="display: none;">
-  <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
-  <input type="hidden" id="form_customer_id" name="sale[customer_id]">
-  <input type="hidden" id="form_payment_method" name="sale[payment_method]">
-  <input type="hidden" id="form_discount_cents" name="sale[discount_cents]">
-  <input type="hidden" id="form_tax_cents" name="sale[tax_cents]">
-  <input type="hidden" id="form_total_cents" name="sale[total_cents]">
-  <div id="form_sale_items"></div>
-</form>
-
+  <!-- Barcode Scanner Modal -->
+  <div id="scannerSection" class="scanner-section">
+    <div class="scanner-header">
+      <h3>📷 Scan Barcode</h3>
+      <p id="scannerStatus">Starting camera...</p>
+    </div>
+    <div id="qr-reader"></div>
+    <div class="scanner-frame-overlay">
+      <div class="scanner-frame">
+        <div class="scanner-corners">
+          <div class="corner top-left"></div>
+          <div class="corner top-right"></div>
+          <div class="corner bottom-left"></div>
+          <div class="corner bottom-right"></div>
+        </div>
+      </div>
+      <div class="scanner-hint">Align barcode within frame</div>
+    </div>
+    <div class="scanner-controls">
+      <button class="btn btn-danger" onclick="saleForm.closeScanner()">❌ Cancel</button>
+      <button class="btn btn-warning" onclick="saleForm.switchCamera()">🔄 Flip</button>
+    </div>
+  </div>
+  <!-- Hidden Sale Form -->
+  <form id="saleForm" method="POST" action="/sales" style="display: none;">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <input type="hidden" id="form_customer_id" name="sale[customer_id]">
+    <input type="hidden" id="form_payment_method" name="sale[payment_method]">
+    <input type="hidden" id="form_discount_cents" name="sale[discount_cents]">
+    <input type="hidden" id="form_tax_cents" name="sale[tax_cents]">
+    <input type="hidden" id="form_total_cents" name="sale[total_cents]">
+    <div id="form_sale_items"></div>
+  </form>
 <script>
-// POS System JavaScript with Barcode Scanner
-class POSSystem {
+// SaleForm based on ProductForm scanner logic, with current flow!
+class SaleForm {
   constructor() {
     this.cart = [];
     this.selectedPaymentMethod = 'cash';
-    this.scannerActive = false;
+    this.isBackCamera = true;
+    this.isScanning = false;
+    this.scanner = null;
+    this.lastScannedCode = null;
+    this.scanCooldown = false;
     this.currentStream = null;
-    this.currentCamera = 'environment'; // 'environment' for rear camera, 'user' for front
     this.init();
   }
-  
   init() {
     this.setupEventListeners();
     this.updateUI();
   }
-  
   setupEventListeners() {
-    // Search
     document.getElementById('searchBtn').addEventListener('click', () => this.searchProducts());
     document.getElementById('searchInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') this.searchProducts();
     });
-    
-    // Barcode Scanner
-    document.getElementById('scanBtn').addEventListener('click', () => this.toggleScanner());
-    document.getElementById('stopScannerBtn').addEventListener('click', () => this.stopScanner());
-    document.getElementById('switchCameraBtn').addEventListener('click', () => this.switchCamera());
-    
-    // Clear cart
-    document.getElementById('clearCartBtn').addEventListener('click', () => this.clearCart());
-    
-    // Discount & Tax
     document.getElementById('discount').addEventListener('input', () => this.calculateTotals());
     document.getElementById('tax').addEventListener('input', () => this.calculateTotals());
-    
-    // Payment methods
+    document.getElementById('checkoutBtn').addEventListener('click', () => this.checkout());
     document.querySelectorAll('.payment-option').forEach(option => {
       option.addEventListener('click', (e) => {
         document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('active'));
@@ -797,71 +555,55 @@ class POSSystem {
         this.selectedPaymentMethod = e.currentTarget.dataset.method;
       });
     });
-    
-    // Checkout
-    document.getElementById('checkoutBtn').addEventListener('click', () => this.checkout());
   }
-  
-  async searchProducts() {
+  searchProducts() {
     const query = document.getElementById('searchInput').value.trim();
-    
+    const resultsDiv = document.getElementById('searchResults');
     if (query.length < 2) {
       this.showAlert('Please enter at least 2 characters', 'error');
       return;
     }
-    
-    const resultsDiv = document.getElementById('searchResults');
-    resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching...</p></div>';
+    resultsDiv.innerHTML = '<div style="text-align:center;"><div class="spinner"></div><p>Searching...</p></div>';
     resultsDiv.style.display = 'block';
-    
-    try {
-      const response = await fetch(`/products?search=${encodeURIComponent(query)}&format=json`);
-      
-      if (!response.ok) throw new Error('Search failed');
-      
-      const products = await response.json();
-      this.displaySearchResults(products);
-    } catch (error) {
-      this.showAlert('Search failed. Please try again.', 'error');
-      resultsDiv.style.display = 'none';
-    }
+    fetch(`/products?search=${encodeURIComponent(query)}&format=json`)
+      .then(res => res.json())
+      .then(products => {
+        this.displaySearchResults(products);
+      })
+      .catch(() => {
+        this.showAlert('Search failed. Please try again.', 'error');
+        resultsDiv.style.display = 'none';
+      });
   }
-  
   displaySearchResults(products) {
     const resultsDiv = document.getElementById('searchResults');
-    
-    if (products.length === 0) {
-      resultsDiv.innerHTML = '<div class="search-result-item"><p>No products found</p></div>';
+    if (!products || products.length === 0) {
+      resultsDiv.innerHTML = '<div style="padding:10px;text-align:center;">No products found</div>';
       return;
     }
-    
     resultsDiv.innerHTML = products.map(product => {
-      const stockClass = product.current_stock > 10 ? 'stock-ok' : 
-                         product.current_stock > 0 ? 'stock-low' : 'stock-out';
-      
       return `
-        <div class="search-result-item" onclick="pos.addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})">
-          <div class="product-info">
-            <h4>${product.name}</h4>
-            <div class="product-meta">
+        <div class="cart-item" style="cursor:pointer;" onclick="saleForm.addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})">
+          <div class="item-details">
+            <h5>${product.name}</h5>
+            <div style="font-size:13px;color:#616161;">
               ${product.brand || 'No brand'} • Rs. ${product.selling_price} • 
-              <span class="stock-badge ${stockClass}">Stock: ${product.current_stock}</span>
+              <span style="background:#e9ffe9;color:#28a745;border-radius:4px;padding:2px 7px;">
+                Stock: ${product.current_stock}
+              </span>
             </div>
           </div>
-          <button class="btn btn-primary">+ Add</button>
+          <button class="btn btn-success btn-sm">+ Add</button>
         </div>
       `;
     }).join('');
   }
-  
   addToCart(product) {
     if (product.current_stock <= 0) {
       this.showAlert(`${product.name} is out of stock!`, 'error');
       return;
     }
-    
     const existingItem = this.cart.find(item => item.product.id === product.id);
-    
     if (existingItem) {
       if (existingItem.quantity >= product.current_stock) {
         this.showAlert(`Only ${product.current_stock} units available!`, 'error');
@@ -875,158 +617,14 @@ class POSSystem {
         unit_price: parseFloat(product.selling_price)
       });
     }
-    
     this.updateUI();
     document.getElementById('searchInput').value = '';
     document.getElementById('searchResults').style.display = 'none';
     this.showAlert(`${product.name} added to cart!`, 'success');
   }
-  
-  // Barcode Scanner Methods
-  async toggleScanner() {
-    if (this.scannerActive) {
-      this.stopScanner();
-    } else {
-      await this.startScanner();
-    }
-  }
-  
-  async startScanner() {
-    const scannerSection = document.getElementById('scannerSection');
-    const scannerStatus = document.getElementById('scannerStatus');
-    
-    scannerSection.style.display = 'block';
-    scannerStatus.innerHTML = '<div class="spinner"></div><p>Initializing camera...</p>';
-    
-    try {
-      // Stop any existing stream
-      if (this.currentStream) {
-        this.currentStream.getTracks().forEach(track => track.stop());
-      }
-      
-      // Get camera access
-      this.currentStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: this.currentCamera,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      });
-      
-      // Set up QuaggaJS
-      await Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: document.getElementById('barcode-scanner'),
-          constraints: {
-            facingMode: this.currentCamera
-          }
-        },
-        decoder: {
-          readers: [
-            "ean_reader",
-            "ean_8_reader",
-            "code_128_reader",
-            "code_39_reader",
-            "upc_reader",
-            "upc_e_reader"
-          ]
-        },
-        locate: true
-      }, (err) => {
-        if (err) {
-          console.error('Quagga init error:', err);
-          scannerStatus.innerHTML = '<p style="color: #dc3545;">Camera initialization failed</p>';
-          return;
-        }
-        
-        scannerStatus.innerHTML = '<p style="color: #28a745;">Camera ready - Point at barcode</p>';
-        Quagga.start();
-        this.scannerActive = true;
-      });
-      
-      // Handle barcode detection
-      Quagga.onDetected((result) => {
-        const code = result.codeResult.code;
-        this.handleBarcodeDetected(code);
-      });
-      
-    } catch (error) {
-      console.error('Camera access error:', error);
-      scannerStatus.innerHTML = `
-        <p style="color: #dc3545;">Camera access denied or not available</p>
-        <p style="font-size: 14px; margin-top: 10px;">Please allow camera access and try again</p>
-      `;
-    }
-  }
-  
-  stopScanner() {
-    if (this.scannerActive) {
-      Quagga.stop();
-      this.scannerActive = false;
-    }
-    
-    if (this.currentStream) {
-      this.currentStream.getTracks().forEach(track => track.stop());
-      this.currentStream = null;
-    }
-    
-    document.getElementById('scannerSection').style.display = 'none';
-  }
-  
-  switchCamera() {
-    this.currentCamera = this.currentCamera === 'environment' ? 'user' : 'environment';
-    this.stopScanner();
-    setTimeout(() => this.startScanner(), 500);
-  }
-  
-  async handleBarcodeDetected(barcode) {
-    // Show scanning feedback
-    const scannerStatus = document.getElementById('scannerStatus');
-    scannerStatus.innerHTML = '<p style="color: #28a745;">Barcode detected: ' + barcode + '</p>';
-    
-    // Search for product by barcode
-    try {
-      const response = await fetch(`/products?barcode=${encodeURIComponent(barcode)}&format=json`);
-      
-      if (!response.ok) throw new Error('Product search failed');
-      
-      const products = await response.json();
-      
-      if (products.length > 0) {
-        const product = products[0];
-        
-        // Add product to cart
-        this.addToCart(product);
-        
-        // Visual feedback
-        scannerStatus.innerHTML = '<p style="color: #28a745;">✓ Product added: ' + product.name + '</p>';
-        
-        // Stop scanner immediately after successful product addition
-        this.stopScanner();
-        
-      } else {
-        scannerStatus.innerHTML = '<p style="color: #dc3545;">Product not found for barcode: ' + barcode + '</p>';
-        
-        // Resume scanning after error
-        setTimeout(() => {
-          if (this.scannerActive) {
-            scannerStatus.innerHTML = '<p style="color: #28a745;">Camera ready - Point at barcode</p>';
-          }
-        }, 2000);
-      }
-    } catch (error) {
-      console.error('Barcode search error:', error);
-      scannerStatus.innerHTML = '<p style="color: #dc3545;">Error searching for product</p>';
-    }
-  }
-  
   updateQuantity(index, change) {
     const item = this.cart[index];
     const newQty = item.quantity + change;
-    
     if (newQty <= 0) {
       this.cart.splice(index, 1);
     } else if (newQty > item.product.current_stock) {
@@ -1035,214 +633,144 @@ class POSSystem {
     } else {
       item.quantity = newQty;
     }
-    
     this.updateUI();
   }
-  
   removeFromCart(index) {
     this.cart.splice(index, 1);
     this.updateUI();
   }
-  
   clearCart() {
     if (confirm('Clear all items from cart?')) {
       this.cart = [];
       this.updateUI();
+      this.showAlert('Cart cleared', 'info');
     }
   }
-  
   updateUI() {
     this.updateCartDisplay();
     this.calculateTotals();
   }
-  
   updateCartDisplay() {
     const emptyCart = document.getElementById('emptyCart');
     const cartItems = document.getElementById('cartItems');
-    const clearBtn = document.getElementById('clearCartBtn');
     const badge = document.getElementById('cartBadge');
-    
     badge.textContent = `${this.cart.length} item${this.cart.length !== 1 ? 's' : ''}`;
-    
     if (this.cart.length === 0) {
       emptyCart.style.display = 'block';
       cartItems.style.display = 'none';
-      clearBtn.style.display = 'none';
     } else {
       emptyCart.style.display = 'none';
       cartItems.style.display = 'block';
-      clearBtn.style.display = 'block';
-      
       cartItems.innerHTML = this.cart.map((item, index) => `
         <div class="cart-item">
           <div class="item-details">
             <h5>${item.product.name}</h5>
-            <p style="color: #6c757d; font-size: 14px;">
+            <p style="color:#6c757d;font-size:13px;">
               Rs. ${item.unit_price.toFixed(2)} × ${item.quantity} = 
               <strong>Rs. ${(item.unit_price * item.quantity).toFixed(2)}</strong>
             </p>
           </div>
-          <div style="display: flex; align-items: center; gap: 15px;">
+          <div style="display:flex;align-items:center;gap:12px;">
             <div class="quantity-controls">
-              <button class="qty-btn" onclick="pos.updateQuantity(${index}, -1)">−</button>
+              <button class="qty-btn" onclick="saleForm.updateQuantity(${index},-1)">−</button>
               <span class="qty-display">${item.quantity}</span>
-              <button class="qty-btn" onclick="pos.updateQuantity(${index}, 1)">+</button>
+              <button class="qty-btn" onclick="saleForm.updateQuantity(${index},1)">+</button>
             </div>
-            <button class="remove-btn" onclick="pos.removeFromCart(${index})">✕</button>
+            <button class="remove-btn" onclick="saleForm.removeFromCart(${index})">✕</button>
           </div>
         </div>
       `).join('');
     }
   }
-  
   calculateTotals() {
     const subtotal = this.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     const discount = parseFloat(document.getElementById('discount').value) || 0;
     const tax = parseFloat(document.getElementById('tax').value) || 0;
     const total = Math.max(0, subtotal - discount + tax);
-    
     document.getElementById('subtotal').textContent = `Rs. ${subtotal.toFixed(2)}`;
     document.getElementById('grandTotal').textContent = `Rs. ${total.toFixed(2)}`;
-    
     document.getElementById('checkoutBtn').disabled = this.cart.length === 0 || total <= 0;
   }
-  
-  async checkout() {
+  checkout() {
     if (this.cart.length === 0) {
       this.showAlert('Cart is empty!', 'error');
       return;
     }
-
-    const discount = parseFloat(document.getElementById('discount').value) || 0;
-    const tax = parseFloat(document.getElementById('tax').value) || 0;
-    const subtotal = this.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-    const total = Math.max(0, subtotal - discount + tax);
-
-    // Show receipt verification instead of direct checkout
     this.showReceiptVerification();
   }
-
   showReceiptVerification() {
-    // Update receipt preview with current data
     this.updateReceiptPreview();
-    
-    // Show receipt section
     document.getElementById('receiptSection').style.display = 'block';
-    
-    // Scroll to receipt section
-    document.getElementById('receiptSection').scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'center'
-    });
-    
-    // Setup event listeners for receipt actions
+    document.getElementById('receiptSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
     this.setupReceiptEventListeners();
   }
-
   updateReceiptPreview() {
-    const discount = parseFloat(document.getElementById('discount').value) || 0;
-    const tax = parseFloat(document.getElementById('tax').value) || 0;
+    const discount = parseFloat(document.getElementById('discount').value)||0;
+    const tax = parseFloat(document.getElementById('tax').value)||0;
     const subtotal = this.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     const total = Math.max(0, subtotal - discount + tax);
-    
-    // Update date
-    const now = new Date();
-    document.getElementById('receiptDate').textContent = 
-      `Date: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-    
-    // Update customer
+    document.getElementById('receiptDate').textContent =
+      `Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
     const customerSelect = document.getElementById('customerSelect');
     const selectedCustomer = customerSelect.options[customerSelect.selectedIndex];
-    document.getElementById('receiptCustomer').textContent = 
+    document.getElementById('receiptCustomer').textContent =
       selectedCustomer.text || 'Walk-in Customer';
-    
-    // Update items
-    const receiptItems = document.getElementById('receiptItems');
-    receiptItems.innerHTML = this.cart.map(item => `
-      <div class="receipt-item-row">
-        <span style="flex: 2;">${item.product.name}</span>
-        <span style="flex: 1; text-align: center;">${item.quantity} × Rs. ${item.unit_price.toFixed(2)}</span>
-        <span style="flex: 1; text-align: right;">Rs. ${(item.quantity * item.unit_price).toFixed(2)}</span>
+    document.getElementById('receiptItems').innerHTML = this.cart.map(item => `
+      <div>
+        ${item.product.name} &nbsp;
+        ${item.quantity}×Rs.${item.unit_price.toFixed(2)} &nbsp;
+        Rs.${(item.quantity*item.unit_price).toFixed(2)}
       </div>
     `).join('');
-    
-    // Update totals
     document.getElementById('receiptSubtotal').textContent = `Rs. ${subtotal.toFixed(2)}`;
     document.getElementById('receiptDiscount').textContent = `Rs. ${discount.toFixed(2)}`;
     document.getElementById('receiptTax').textContent = `Rs. ${tax.toFixed(2)}`;
     document.getElementById('receiptGrandTotal').textContent = `Rs. ${total.toFixed(2)}`;
-    
-    // Update payment method
-    document.getElementById('receiptPaymentMethod').textContent = 
-      this.selectedPaymentMethod.charAt(0).toUpperCase() + this.selectedPaymentMethod.slice(1);
+    document.getElementById('receiptPaymentMethod').textContent =
+      this.selectedPaymentMethod.charAt(0).toUpperCase()+this.selectedPaymentMethod.slice(1);
   }
-
   setupReceiptEventListeners() {
-    // Remove existing listeners to prevent duplicates
-    document.getElementById('confirmSaleBtn').replaceWith(document.getElementById('confirmSaleBtn').cloneNode(true));
-    document.getElementById('cancelSaleBtn').replaceWith(document.getElementById('cancelSaleBtn').cloneNode(true));
-    
-    // Add new listeners
-    document.getElementById('confirmSaleBtn').addEventListener('click', () => this.confirmSale());
-    document.getElementById('cancelSaleBtn').addEventListener('click', () => this.cancelSale());
+    document.getElementById('confirmSaleBtn').onclick = () => this.confirmSale();
+    document.getElementById('cancelSaleBtn').onclick = () => this.cancelSale();
   }
-
-  async confirmSale() {
-    const discount = parseFloat(document.getElementById('discount').value) || 0;
-    const tax = parseFloat(document.getElementById('tax').value) || 0;
-    const subtotal = this.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-    const total = Math.max(0, subtotal - discount + tax);
-
-    // Show loading state
+  confirmSale() {
     const confirmBtn = document.getElementById('confirmSaleBtn');
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '⏳ Processing...';
-
-    try {
-      // Prepare form data
-      this.prepareFormData();
-
-      // Submit the form via AJAX
-      const response = await this.submitForm();
-      
-      if (response.success) {
-        this.handleSaleSuccess(response);
-      } else {
-        throw new Error(response.message || 'Sale failed');
-      }
-    } catch (error) {
-      this.showAlert(`Error: ${error.message}`, 'error');
-      confirmBtn.disabled = false;
-      confirmBtn.innerHTML = '✅ Confirm & Complete Sale';
-    }
+    this.prepareFormData();
+    this.submitForm()
+      .then(response => {
+        if (response.success) {
+          this.handleSaleSuccess(response);
+        } else {
+          throw new Error(response.message||'Sale failed');
+        }
+      })
+      .catch(error => {
+        this.showAlert(`Error: ${error.message}`, 'error');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '✅ Confirm & Complete Sale';
+      });
   }
-
   prepareFormData() {
-    const discount = parseFloat(document.getElementById('discount').value) || 0;
-    const tax = parseFloat(document.getElementById('tax').value) || 0;
+    const discount = parseFloat(document.getElementById('discount').value)||0;
+    const tax = parseFloat(document.getElementById('tax').value)||0;
     const subtotal = this.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     const total = Math.max(0, subtotal - discount + tax);
-    
-    // Set form values
     document.getElementById('form_customer_id').value = document.getElementById('customerSelect').value || '';
     document.getElementById('form_payment_method').value = this.selectedPaymentMethod;
     document.getElementById('form_discount_cents').value = Math.round(discount * 100);
     document.getElementById('form_tax_cents').value = Math.round(tax * 100);
     document.getElementById('form_total_cents').value = Math.round(total * 100);
-    
-    // Prepare sale items
-    const formSaleItems = document.getElementById('form_sale_items');
-    formSaleItems.innerHTML = this.cart.map((item, index) => `
+    document.getElementById('form_sale_items').innerHTML = this.cart.map((item, index) => `
       <input type="hidden" name="sale[sale_items_attributes][${index}][product_id]" value="${item.product.id}">
       <input type="hidden" name="sale[sale_items_attributes][${index}][qty]" value="${item.quantity}">
       <input type="hidden" name="sale[sale_items_attributes][${index}][unit_price_cents]" value="${Math.round(item.unit_price * 100)}">
     `).join('');
   }
-
   async submitForm() {
     const form = document.getElementById('saleForm');
     const formData = new FormData(form);
-
     const response = await fetch(form.action, {
       method: 'POST',
       body: formData,
@@ -1251,62 +779,176 @@ class POSSystem {
         'Accept': 'application/json'
       }
     });
-
     return await response.json();
   }
-
   handleSaleSuccess(result) {
-    // Show success message
     this.showAlert('Sale completed successfully! Receipt has been generated.', 'success');
-    
-    // Hide receipt section
     document.getElementById('receiptSection').style.display = 'none';
-    
-    // Reset cart and UI
     this.cart = [];
     this.updateUI();
-    
-    // Reset form fields
     document.getElementById('discount').value = '0';
     document.getElementById('tax').value = '0';
-    
-    // Enable print receipt functionality
     if (result.redirect_url) {
       setTimeout(() => {
         if (confirm('Sale completed! Would you like to view the receipt?')) {
           window.open(result.redirect_url, '_blank');
         }
-      }, 1000);
+      }, 900);
     }
   }
-
   cancelSale() {
-    // Hide receipt section
     document.getElementById('receiptSection').style.display = 'none';
-    
-    // Show confirmation message
     this.showAlert('Sale verification cancelled', 'error');
   }
-
   showAlert(message, type) {
     const alertContainer = document.getElementById('alertContainer');
-    const alertClass = type === 'error' ? 'alert-error' : type === 'info' ? 'alert-info' : 'alert-success';
-    
-    alertContainer.innerHTML = `
-      <div class="alert ${alertClass}">
-        ${message}
-      </div>
-    `;
-    
+    const alertClass = type === 'error'
+      ? 'alert-error'
+      : type === 'info'
+      ? 'alert-info'
+      : 'alert-success';
+    alertContainer.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
     setTimeout(() => {
       alertContainer.innerHTML = '';
-    }, 3000);
+    }, 2500);
+  }
+  // ----------- Scanner using Html5-Qrcode (from productForm logic)
+  async openScanner() {
+    if (this.isScanning) return;
+    const scannerSection = document.getElementById('scannerSection');
+    const scannerStatus = document.getElementById('scannerStatus');
+    scannerSection.style.display = 'flex';
+    scannerStatus.textContent = 'Starting camera...';
+    this.isScanning = true;
+    try {
+      this.scanner = new Html5Qrcode("qr-reader");
+      const devices = await Html5Qrcode.getCameras();
+      if (!devices || devices.length === 0) throw new Error('No cameras found');
+      const cameraId = this.isBackCamera && devices.length > 1 ? devices[devices.length - 1].id : devices[0].id;
+      const config = {
+        fps: 30,
+        qrbox: {width:250, height:130},
+        aspectRatio: 1.7,
+        disableFlip: false,
+        videoConstraints: {
+          facingMode:this.isBackCamera?"environment":"user",
+          advanced: [{ focusMode: "continuous" }]
+        }
+      };
+      await this.scanner.start(cameraId, config,
+        (decodedText) =>{
+          this.onScanSuccess(decodedText);
+        },
+        (errorMessage) => {
+          // silent error
+        }
+      );
+      scannerStatus.textContent = '✓ Camera ready - Point at barcode';
+      scannerStatus.style.color = '#28a745';
+    } catch (error) {
+      this.handleScannerError(error);
+    }
+  }
+  handleScannerError(error) {
+    const scannerStatus = document.getElementById('scannerStatus');
+    let message = 'Camera error. ';
+    if (error.message.includes('NotAllowedError') || error.message.includes('Permission denied')) {
+      message = '❌ Camera permission denied. Please allow camera access and try again.';
+    } else if (error.message.includes('NotFoundError') || error.message.includes('No cameras found')) {
+      message = '❌ No camera found on this device.';
+    } else if (error.message.includes('NotReadableError')) {
+      message = '❌ Camera is being used by another app.';
+    } else if (error.message.includes('InsecureContextError') || error.message.includes('secure')) {
+      message = '❌ Camera requires HTTPS connection.';
+    } else {
+      message = '❌ ' + error.message;
+    }
+    scannerStatus.textContent = message;
+    scannerStatus.style.color = '#dc3545';
+    this.showAlert(message, 'error');
+    setTimeout(()=>{this.closeScanner();},3000);
+  }
+  onScanSuccess(decodedText) {
+    if (this.scanCooldown) return;
+    // Clean the barcode
+    const cleanBarcode = decodedText.replace(/\D/g, '');
+    if (cleanBarcode.length < 8 || cleanBarcode.length > 20) return;
+    if (cleanBarcode === this.lastScannedCode) return;
+    this.lastScannedCode = cleanBarcode;
+    this.scanCooldown = true;
+    const scannerStatus = document.getElementById('scannerStatus');
+    scannerStatus.textContent = '✅ Barcode Scanned!';
+    scannerStatus.style.color = '#28a745';
+    this.playBeep();
+    // Add product to cart if found
+    fetch(`/products?barcode=${encodeURIComponent(cleanBarcode)}&format=json`)
+      .then(res=>res.json())
+      .then(products=>{
+        if (products.length > 0) {
+          this.addToCart(products[0]);
+          scannerStatus.textContent = '✓ Product added: ' + products[0].name;
+        } else {
+          scannerStatus.textContent = `Product not found for barcode: `+cleanBarcode;
+          setTimeout(()=>{
+            if (this.isScanning) scannerStatus.textContent = '✓ Camera ready - Point at barcode';
+          },2000);
+        }
+        setTimeout(()=>{this.closeScanner();},900);
+      })
+      .catch(()=>{
+        scannerStatus.textContent = 'Error searching for product';
+        setTimeout(()=>{this.closeScanner();},900);
+      });
+  }
+  async switchCamera() {
+    if (!this.isScanning) return;
+    this.isBackCamera = !this.isBackCamera;
+    await this.closeScanner();
+    setTimeout(() => {
+      this.openScanner();
+    }, 300);
+  }
+  async closeScanner() {
+    if (this.scanner) {
+      try { await this.scanner.stop(); this.scanner.clear(); } catch (e) {}
+      this.scanner = null;
+    }
+    document.getElementById('scannerSection').style.display = 'none';
+    this.isScanning = false;
+    this.scanCooldown = false;
+    this.lastScannedCode = null;
+  }
+  playBeep() {
+    try {
+      const audioContext = new (window.AudioContext||window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 800; oscillator.type='sine'; gainNode.gain.value = 0.1;
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    } catch(e){}
   }
 }
+// expose to HTML
+const saleForm = new SaleForm();
+window.saleForm = saleForm;
+// Expose methods used in search result/events to global scope
+window.saleForm_addToCart = saleForm.addToCart.bind(saleForm);
+window.saleForm_updateQuantity = saleForm.updateQuantity.bind(saleForm);
+window.saleForm_removeFromCart = saleForm.removeFromCart.bind(saleForm);
 
-// Initialize POS
-const pos = new POSSystem();
+// Document events to auto stop scanner
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden && saleForm.isScanning) {
+    saleForm.closeScanner();
+  }
+});
+window.addEventListener('beforeunload', function() {
+  if (saleForm.isScanning) {
+    saleForm.closeScanner();
+  }
+});
 </script>
-
 </body>
 </html>
