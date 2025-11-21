@@ -1,0 +1,53 @@
+<!-- app/views/sales/show.html.erb -->
+<div class="container">
+  <div class="header">
+    <h1>Sale Details</h1>
+    <div class="actions">
+      <%= link_to "← Back to Sales", sales_path, class: "btn btn-secondary" %>
+      <%= link_to "🧾 Receipt", receipt_sale_path(@sale), class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <div class="sale-details">
+    <div class="card">
+      <div class="card-header">
+        <h3>Invoice #<%= @sale.invoice_no %></h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Date:</strong> <%= @sale.created_at.strftime("%d/%m/%Y %I:%M %p") %></p>
+            <p><strong>Cashier:</strong> <%= @sale.user.full_name %></p>
+            <p><strong>Customer:</strong> <%= @sale.customer&.name || "Walk-in" %></p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Payment Method:</strong> <%= @sale.payment_method.to_s.humanize %></p>
+            <p><strong>Total:</strong> Rs. <%= @sale.total_amount %></p>
+          </div>
+        </div>
+
+        <h4>Items Sold</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @sale.sale_items.each do |item| %>
+              <tr>
+                <td><%= item.product.name %></td>
+                <td><%= item.qty %></td>
+                <td>Rs. <%= item.unit_price %></td>
+                <td>Rs. <%= item.total_price %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

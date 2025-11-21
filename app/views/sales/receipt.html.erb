@@ -1,0 +1,162 @@
+<!-- app/views/sales/receipt.html.erb -->
+<div class="container receipt-container">
+  <div class="receipt">
+    <div class="receipt-header">
+      <h2><%= Current.shop.name %></h2>
+      <p><%= Current.shop.address %></p>
+      <p>Phone: <%= Current.shop.phone %></p>
+    </div>
+
+    <div class="receipt-info">
+      <p><strong>Invoice #:</strong> <%= @sale.invoice_no %></p>
+      <p><strong>Date:</strong> <%= @sale.created_at.strftime("%d/%m/%Y %I:%M %p") %></p>
+      <p><strong>Cashier:</strong> <%= @sale.user.full_name %></p>
+      <% if @sale.customer %>
+        <p><strong>Customer:</strong> <%= @sale.customer.name %></p>
+      <% end %>
+    </div>
+
+    <div class="receipt-items">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @sale.sale_items.each do |item| %>
+            <tr>
+              <td><%= item.product.name %></td>
+              <td><%= item.qty %></td>
+              <td>Rs. <%= item.unit_price %></td>
+              <td>Rs. <%= item.total_price %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="receipt-totals">
+      <div class="total-row">
+        <span>Subtotal:</span>
+        <span>Rs. <%= @sale.subtotal_amount %></span>
+      </div>
+      <% if @sale.discount_cents > 0 %>
+        <div class="total-row">
+          <span>Discount:</span>
+          <span>-Rs. <%= @sale.discount_amount %></span>
+        </div>
+      <% end %>
+      <% if @sale.tax_cents > 0 %>
+        <div class="total-row">
+          <span>Tax:</span>
+          <span>Rs. <%= @sale.tax_amount %></span>
+        </div>
+      <% end %>
+      <div class="total-row grand-total">
+        <span><strong>Total:</strong></span>
+        <span><strong>Rs. <%= @sale.total_amount %></strong></span>
+      </div>
+    </div>
+
+    <div class="receipt-footer">
+      <p><strong>Payment Method:</strong> <%= @sale.payment_method.to_s.humanize %></p>
+      <p class="thank-you">Thank you for your business!</p>
+    </div>
+  </div>
+
+  <div class="receipt-actions mt-4">
+    <%= link_to "🖨️ Print Receipt", "javascript:window.print()", class: "btn btn-primary" %>
+    <%= link_to "🛒 New Sale", new_sale_path, class: "btn btn-success" %>
+    <%= link_to "📊 View All Sales", sales_path, class: "btn btn-outline" %>
+  </div>
+</div>
+
+<style>
+.receipt-container {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.receipt {
+  background: white;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+}
+
+.receipt-header {
+  text-align: center;
+  border-bottom: 2px dashed #ddd;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.receipt-header h2 {
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.receipt-info {
+  margin-bottom: 15px;
+}
+
+.receipt-items table {
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.receipt-items th {
+  border-bottom: 1px solid #ddd;
+  padding: 5px 0;
+}
+
+.receipt-items td {
+  padding: 3px 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.receipt-totals {
+  border-top: 2px dashed #ddd;
+  padding-top: 10px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.total-row.grand-total {
+  border-top: 1px solid #000;
+  padding-top: 5px;
+  font-size: 1.1em;
+}
+
+.receipt-footer {
+  text-align: center;
+  border-top: 2px dashed #ddd;
+  padding-top: 15px;
+  margin-top: 15px;
+}
+
+.thank-you {
+  font-style: italic;
+  margin-top: 10px;
+}
+
+@media print {
+  .receipt-actions {
+    display: none;
+  }
+  
+  .receipt {
+    border: none;
+    box-shadow: none;
+  }
+}
+</style>

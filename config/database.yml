@@ -1,0 +1,19 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  username: hamzaxdeveloper
+  password: qwe23@#$%^&jhgtyui!opASDBHY&*
+  host: localhost
+  pool: 5
+
+development:
+  <<: *default
+  database: pos_development
+
+test:
+  <<: *default
+  database: pos_test
+
+production:
+  <<: *default
+  database: pos_production

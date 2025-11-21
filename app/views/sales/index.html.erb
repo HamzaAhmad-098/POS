@@ -1,0 +1,63 @@
+<!-- app/views/sales/index.html.erb -->
+<div class="container">
+  <div class="header">
+    <h1>📊 Sales History</h1>
+    <div class="actions">
+      <%= link_to "🛒 New Sale", new_sale_path, class: "btn btn-primary" %>
+      <%= link_to "📦 Products", products_path, class: "btn btn-outline" %>
+    </div>
+  </div>
+
+  <div class="stats-cards">
+    <div class="stat-card">
+      <h3>Today's Sales</h3>
+      <p class="amount">Rs. <%= @today_sales.sum { |s| s.total_cents.to_f / 100.0 }.round(2) %></p>
+    </div>
+    <div class="stat-card">
+      <h3>Today's Orders</h3>
+      <p class="count"><%= @today_sales.count %></p>
+    </div>
+  </div>
+
+  <div class="sales-table">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Payment</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @sales.each do |sale| %>
+          <tr>
+            <td><strong><%= sale.invoice_no %></strong></td>
+            <td><%= sale.created_at.strftime("%d/%m/%Y %I:%M %p") %></td>
+            <td><%= sale.customer&.name || "Walk-in" %></td>
+            <td><%= sale.sale_items.sum(:qty) %></td>
+            <td>Rs. <%= sale.total_amount %></td>
+            <td><span class="badge bg-secondary"><%= sale.payment_method.to_s.humanize %></span></td>
+            <td>
+              <%= link_to "👁️", sale_path(sale), class: "btn btn-sm btn-outline" %>
+              <%= link_to "🧾", receipt_sale_path(sale), class: "btn btn-sm btn-info" %>
+              <%= link_to "🗑️", sale_path(sale), method: :delete, 
+                    data: { confirm: "Are you sure?" }, 
+                    class: "btn btn-sm btn-danger" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    
+    <% if @sales.empty? %>
+      <div class="empty-state">
+        <p>No sales yet.</p>
+        <%= link_to "Create Your First Sale", new_sale_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

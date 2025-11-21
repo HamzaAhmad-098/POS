@@ -1,0 +1,492 @@
+<!-- app/views/products/new.html.erb -->
+<div class="container">
+  <div class="header">
+    <h1>
+      <% if @product.barcode.present? %>
+        ➕ Add Product - Barcode: <span class="barcode-highlight"><%= @product.barcode %></span>
+      <% else %>
+        ➕ Add New Product
+      <% end %>
+    </h1>
+    <div class="actions">
+      <%= link_to "← Back to Products", products_path, class: "btn btn-secondary" %>
+      <%= link_to "📷 Scan Another", scan_products_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <!-- API Integration Status -->
+  <% if @product.barcode.present? %>
+    <div id="api-status">
+      <% if @api_product_info %>
+        <div class="alert alert-success">
+          <div class="api-success">
+            <span class="api-icon">✅</span>
+            <div class="api-content">
+              <h4>Product Details Found!</h4>
+              <p>Fetched from <strong><%= @api_product_info[:source].to_s.humanize %></strong></p>
+              <% if @api_product_info[:image_url].present? %>
+                <div class="product-preview">
+                  <img src="<%= @api_product_info[:image_url] %>" alt="Product image" class="product-image-preview">
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="alert alert-warning">
+          <div class="api-warning">
+            <span class="api-icon">⚠️</span>
+            <div class="api-content">
+              <h4>No Product Details Found</h4>
+              <p>Barcode <strong><%= @product.barcode %></strong> not found in product databases.</p>
+              <p>Please enter the product details manually below.</p>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="product-form-container">
+    <%= form_with model: @product, local: true, html: { class: "product-form", id: "product-form" } do |form| %>
+      
+      <!-- Barcode Section -->
+      <div class="form-section">
+        <h3>📦 Product Identification</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <%= form.label :barcode, "Barcode *" %>
+            <div class="barcode-input-group">
+              <%= form.text_field :barcode, 
+                    required: true,
+                    class: "form-control",
+                    placeholder: "Scan or enter barcode",
+                    data: { barcode_field: true } %>
+              <button type="button" id="fetch-details" class="btn btn-info fetch-btn" 
+                      data-barcode="<%= @product.barcode %>"
+                      <%= 'disabled' unless @product.barcode.present? %>>
+                🔍 Fetch Details
+              </button>
+            </div>
+            <small class="form-text">Enter barcode and click "Fetch Details" to auto-fill</small>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :name, "Product Name *" %>
+            <%= form.text_field :name, 
+                  required: true, 
+                  class: "form-control",
+                  placeholder: "Product name",
+                  data: { name_field: true } %>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <%= form.label :brand, "Brand" %>
+            <%= form.text_field :brand, 
+                  class: "form-control",
+                  placeholder: "Brand name",
+                  data: { brand_field: true },
+                  list: "brand-suggestions" %>
+            <datalist id="brand-suggestions">
+              <% Current.shop.products.distinct.pluck(:brand).compact.each do |brand| %>
+                <option value="<%= brand %>">
+              <% end %>
+            </datalist>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :category_id, "Category" %>
+            <%= form.collection_select :category_id, @categories, :id, :name, 
+                  { include_blank: "Select Category" }, 
+                  class: "form-control",
+                  data: { category_field: true } %>
+            <small class="form-text">
+              <%= link_to "➕ Add New Category", new_category_path, target: "_blank" %>
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing & Stock -->
+      <div class="form-section">
+        <h3>💰 Pricing & Stock</h3>
+        <div class="quick-pricing-grid">
+          <div class="form-group">
+            <%= form.label :purchase_price_cents, "Cost Price (Rs)" %>
+            <div class="input-group">
+              <span class="input-group-text">Rs.</span>
+              <%= form.number_field :purchase_price_cents, 
+                    step: 0.01, 
+                    class: "form-control",
+                    placeholder: "0.00" %>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :selling_price_cents, "Selling Price (Rs) *" %>
+            <div class="input-group">
+              <span class="input-group-text">Rs.</span>
+              <%= form.number_field :selling_price_cents, 
+                    step: 0.01, 
+                    required: true,
+                    class: "form-control",
+                    placeholder: "0.00" %>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :current_stock, "Stock Qty *" %>
+            <%= form.number_field :current_stock, 
+                  step: 1, 
+                  required: true,
+                  class: "form-control",
+                  placeholder: "0",
+                  value: @product.current_stock || 0 %>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :unit, "Unit" %>
+            <%= form.select :unit, 
+                  options_for_select(['pcs', 'kg', 'g', 'L', 'ml', 'pack', 'box', 'bottle'], @product.unit),
+                  { include_blank: "Select Unit" }, 
+                  class: "form-control" %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Details -->
+      <div class="form-section">
+        <h3>⚙️ Additional Details</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <%= form.label :reorder_level, "Low Stock Alert" %>
+            <%= form.number_field :reorder_level, 
+                  step: 1, 
+                  class: "form-control",
+                  placeholder: "5" %>
+            <small class="form-text">Get notified when stock reaches this level</small>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :expiry_date, "Expiry Date" %>
+            <%= form.date_field :expiry_date, class: "form-control" %>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :sku, "SKU (Optional)" %>
+          <%= form.text_field :sku, class: "form-control", placeholder: "Stock Keeping Unit" %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :photo, "Product Photo" %>
+          <%= form.file_field :photo, class: "form-control" %>
+          <small class="form-text">Optional: Upload product image</small>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <div class="action-buttons">
+          <%= form.submit "💾 Save Product", 
+                class: "btn btn-success btn-lg",
+                data: { turbo: false } %>
+          
+          <%= form.submit "💾 Save & Scan Another", 
+                name: "save_and_scan", 
+                class: "btn btn-primary btn-lg",
+                data: { turbo: false } %>
+          
+          <%= link_to "📷 Scan Different", scan_products_path, class: "btn btn-outline btn-lg" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('product-form');
+  const barcodeField = document.querySelector('[data-barcode-field]');
+  const nameField = document.querySelector('[data-name-field]');
+  const brandField = document.querySelector('[data-brand-field]');
+  const categoryField = document.querySelector('[data-category-field]');
+  const fetchButton = document.getElementById('fetch-details');
+  const apiStatus = document.getElementById('api-status');
+
+  // Enable fetch button when barcode is entered
+  if (barcodeField && fetchButton) {
+    barcodeField.addEventListener('input', function() {
+      fetchButton.disabled = !this.value.trim();
+      fetchButton.dataset.barcode = this.value.trim();
+    });
+
+    // Auto-fetch when barcode is entered (after delay)
+    let fetchTimeout;
+    barcodeField.addEventListener('input', function() {
+      clearTimeout(fetchTimeout);
+      if (this.value.length >= 8) {
+        fetchTimeout = setTimeout(() => {
+          if (!nameField.value.trim()) { // Only fetch if name is empty
+            fetchProductDetails(this.value.trim());
+          }
+        }, 1000);
+      }
+    });
+
+    // Manual fetch button
+    fetchButton.addEventListener('click', function() {
+      const barcode = this.dataset.barcode;
+      if (barcode) {
+        fetchProductDetails(barcode);
+      }
+    });
+  }
+
+  async function fetchProductDetails(barcode) {
+    if (!barcode) return;
+
+    // Show loading state
+    if (apiStatus) {
+      apiStatus.innerHTML = `
+        <div class="alert alert-info">
+          <div class="api-loading">
+            <span class="api-icon">⏳</span>
+            <div class="api-content">
+              <h4>Fetching Product Details...</h4>
+              <p>Searching databases for barcode: <strong>${barcode}</strong></p>
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    fetchButton.disabled = true;
+    fetchButton.innerHTML = '⏳ Fetching...';
+
+    try {
+      const response = await fetch(`/products/fetch_details?barcode=${encodeURIComponent(barcode)}`);
+      const result = await response.json();
+
+      if (result.success) {
+        // Auto-fill form with fetched data
+        if (nameField && result.product.name) {
+          nameField.value = result.product.name;
+        }
+        if (brandField && result.product.brand) {
+          brandField.value = result.product.brand;
+        }
+        if (categoryField && result.product.category_id) {
+          categoryField.value = result.product.category_id;
+        }
+
+        // Show success message
+        if (apiStatus) {
+          let imageHtml = '';
+          if (result.product.image_url) {
+            imageHtml = `
+              <div class="product-preview">
+                <img src="${result.product.image_url}" alt="Product image" class="product-image-preview">
+              </div>
+            `;
+          }
+
+          apiStatus.innerHTML = `
+            <div class="alert alert-success">
+              <div class="api-success">
+                <span class="api-icon">✅</span>
+                <div class="api-content">
+                  <h4>Product Details Found!</h4>
+                  <p>Fetched from <strong>${result.product.source.replace('_', ' ')}</strong></p>
+                  ${imageHtml}
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Auto-focus on selling price for quick entry
+        const sellingPriceField = document.getElementById('product_selling_price_cents');
+        if (sellingPriceField) {
+          sellingPriceField.focus();
+        }
+
+      } else {
+        // Show not found message
+        if (apiStatus) {
+          apiStatus.innerHTML = `
+            <div class="alert alert-warning">
+              <div class="api-warning">
+                <span class="api-icon">⚠️</span>
+                <div class="api-content">
+                  <h4>No Product Details Found</h4>
+                  <p>${result.message}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Auto-focus on name field for manual entry
+        if (nameField) {
+          nameField.focus();
+        }
+      }
+
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      
+      if (apiStatus) {
+        apiStatus.innerHTML = `
+          <div class="alert alert-danger">
+            <div class="api-error">
+              <span class="api-icon">❌</span>
+              <div class="api-content">
+                <h4>Network Error</h4>
+                <p>Failed to fetch product details. Please check your internet connection.</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    } finally {
+      fetchButton.disabled = false;
+      fetchButton.innerHTML = '🔍 Fetch Details';
+    }
+  }
+
+  // Quick navigation with Enter key
+  if (barcodeField) {
+    barcodeField.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (nameField) nameField.focus();
+      }
+    });
+  }
+});
+</script>
+
+<style>
+.product-form-container {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.barcode-highlight {
+  background: #007bff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.barcode-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.barcode-input-group .form-control {
+  flex: 1;
+}
+
+.fetch-btn {
+  white-space: nowrap;
+}
+
+.api-success, .api-warning, .api-error, .api-loading {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.api-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.api-content {
+  flex: 1;
+}
+
+.api-content h4 {
+  margin: 0 0 5px 0;
+}
+
+.api-content p {
+  margin: 0;
+}
+
+.product-preview {
+  margin-top: 10px;
+}
+
+.product-image-preview {
+  max-width: 100px;
+  max-height: 100px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  margin-top: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.form-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.quick-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .barcode-input-group {
+    flex-direction: column;
+  }
+  
+  .quick-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .action-buttons .btn {
+    width: 100%;
+  }
+}
+</style>

@@ -1,0 +1,38 @@
+# app/views/products/bulk_import.html.erb
+<div class="container">
+  <div class="header">
+    <h1>Bulk Import Products</h1>
+    <%= link_to "Back to Products", products_path, class: "btn btn-secondary" %>
+  </div>
+
+  <div class="import-guide">
+    <h3>Import Guide</h3>
+    <p>Upload a CSV file with the following columns:</p>
+    <ul>
+      <li><strong>name</strong> (required) - Product name</li>
+      <li><strong>barcode</strong> - Barcode number</li>
+      <li><strong>sku</strong> - Stock keeping unit</li>
+      <li><strong>selling_price</strong> (required) - Selling price</li>
+      <li><strong>purchase_price</strong> - Purchase price</li>
+      <li><strong>current_stock</strong> - Initial stock quantity</li>
+      <li><strong>reorder_level</strong> - Low stock alert level</li>
+      <li><strong>category</strong> - Category name</li>
+    </ul>
+    
+    <%= link_to "Download Template CSV", "#", class: "btn btn-outline" %>
+  </div>
+
+  <div class="import-form">
+    <%= form_with url: bulk_import_products_path, method: :post, local: true, multipart: true do |form| %>
+      <div class="form-group">
+        <%= form.label :file, "Select CSV File" %>
+        <%= form.file_field :file, accept: ".csv", required: true, class: "form-control" %>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit "Import Products", class: "btn btn-primary" %>
+        <%= link_to "Cancel", products_path, class: "btn btn-outline" %>
+      </div>
+    <% end %>
+  </div>
+</div>

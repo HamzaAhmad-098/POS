@@ -1,0 +1,32 @@
+<div class="dashboard">
+  <h1>Dashboard</h1>
+  
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3>Today's Sales</h3>
+      <p class="amount">Rs. <%= @total_sales %></p>
+    </div>
+    
+    <div class="stat-card">
+      <h3>Low Stock Items</h3>
+      <p class="count"><%= @low_stock_count %></p>
+    </div>
+  </div>
+  
+  <div class="quick-actions">
+    <%= link_to "New Bill", new_sale_path, class: "btn-primary" %>
+    <%= link_to "Add Product", new_product_path, class: "btn-secondary" %>
+    <%= link_to "View Reports", reports_path, class: "btn-secondary" %>
+  </div>
+  
+  <div class="recent-sales">
+    <h3>Recent Sales</h3>
+    <% @recent_sales.each do |sale| %>
+      <div class="sale-item">
+        <span>#<%= sale.invoice_no %></span>
+        <span>Rs. <%= sale.total_cents / 100.0 %></span>
+        <span><%= sale.created_at.strftime("%H:%M") %></span>
+      </div>
+    <% end %>
+  </div>
+</div>
