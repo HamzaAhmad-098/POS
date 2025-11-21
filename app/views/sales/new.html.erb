@@ -997,17 +997,16 @@ class POSSystem {
       
       if (products.length > 0) {
         const product = products[0];
+        
+        // Add product to cart
         this.addToCart(product);
         
         // Visual feedback
         scannerStatus.innerHTML = '<p style="color: #28a745;">✓ Product added: ' + product.name + '</p>';
         
-        // Resume scanning after a brief pause
-        setTimeout(() => {
-          if (this.scannerActive) {
-            scannerStatus.innerHTML = '<p style="color: #28a745;">Camera ready - Point at barcode</p>';
-          }
-        }, 1500);
+        // Stop scanner immediately after successful product addition
+        this.stopScanner();
+        
       } else {
         scannerStatus.innerHTML = '<p style="color: #dc3545;">Product not found for barcode: ' + barcode + '</p>';
         
