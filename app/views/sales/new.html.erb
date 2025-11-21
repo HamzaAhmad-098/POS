@@ -4,6 +4,8 @@
 <head>
   <title>New Sale - POS System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Include QuaggaJS for barcode scanning -->
+  <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
@@ -67,6 +69,7 @@
     .search-input-group {
       display: flex;
       gap: 10px;
+      margin-bottom: 10px;
     }
     
     .search-input {
@@ -110,6 +113,20 @@
       background: #dc3545;
       color: white;
     }
+    
+    .btn-info {
+      background: #17a2b8;
+      color: white;
+    }
+    
+    .btn-info:hover { background: #138496; }
+    
+    .btn-warning {
+      background: #ffc107;
+      color: #212529;
+    }
+    
+    .btn-warning:hover { background: #e0a800; }
     
     .search-results {
       background: white;
@@ -334,6 +351,12 @@
       border: 1px solid #c3e6cb;
     }
     
+    .alert-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
     .loading {
       text-align: center;
       padding: 20px;
@@ -418,6 +441,68 @@
       flex: 1;
     }
     
+    /* Barcode Scanner Styles */
+    .scanner-section {
+      display: none;
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 2px solid #e9ecef;
+    }
+    
+    .scanner-container {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    #barcode-scanner {
+      width: 100%;
+      height: 300px;
+      background: #000;
+      border-radius: 8px;
+    }
+    
+    .scanner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      background: rgba(0, 0, 0, 0.5);
+    }
+    
+    .scanner-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+    
+    .scanner-frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70%;
+      height: 150px;
+      border: 2px solid #28a745;
+      border-radius: 8px;
+      box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.3);
+    }
+    
+    .scanner-loading {
+      text-align: center;
+      padding: 20px;
+    }
+    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -435,6 +520,14 @@
       
       .receipt-actions {
         flex-direction: column;
+      }
+      
+      .scanner-controls {
+        flex-direction: column;
+      }
+      
+      #barcode-scanner {
+        height: 250px;
       }
     }
   </style>
@@ -462,7 +555,29 @@
           autocomplete="off"
         >
         <button class="btn btn-primary" id="searchBtn">Search</button>
+        <button class="btn btn-info" id="scanBtn">📷 Scan Barcode</button>
       </div>
+      
+      <!-- Barcode Scanner Section -->
+      <div id="scannerSection" class="scanner-section">
+        <div class="scanner-container">
+          <div id="barcode-scanner"></div>
+          <div class="scanner-frame"></div>
+          <div class="scanner-overlay">
+            <h3 style="color: white; margin-bottom: 10px;">Barcode Scanner</h3>
+            <p style="color: white; text-align: center;">Point camera at barcode</p>
+            <div id="scannerStatus" class="scanner-loading">
+              <div class="spinner"></div>
+              <p>Initializing camera...</p>
+            </div>
+          </div>
+        </div>
+        <div class="scanner-controls">
+          <button class="btn btn-success" id="stopScannerBtn">Stop Scanner</button>
+          <button class="btn btn-warning" id="switchCameraBtn">Switch Camera</button>
+        </div>
+      </div>
+      
       <div id="searchResults" style="display: none;"></div>
     </div>
     
@@ -476,7 +591,7 @@
       <div id="emptyCart" class="empty-cart">
         <p style="font-size: 48px;">🛒</p>
         <h3>Your cart is empty</h3>
-        <p>Search for products to add them</p>
+        <p>Search for products or scan barcodes to add them</p>
       </div>
       
       <div id="cartItems" style="display: none;"></div>
@@ -639,11 +754,14 @@
 </form>
 
 <script>
-// POS System JavaScript
+// POS System JavaScript with Barcode Scanner
 class POSSystem {
   constructor() {
     this.cart = [];
     this.selectedPaymentMethod = 'cash';
+    this.scannerActive = false;
+    this.currentStream = null;
+    this.currentCamera = 'environment'; // 'environment' for rear camera, 'user' for front
     this.init();
   }
   
@@ -658,6 +776,11 @@ class POSSystem {
     document.getElementById('searchInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') this.searchProducts();
     });
+    
+    // Barcode Scanner
+    document.getElementById('scanBtn').addEventListener('click', () => this.toggleScanner());
+    document.getElementById('stopScannerBtn').addEventListener('click', () => this.stopScanner());
+    document.getElementById('switchCameraBtn').addEventListener('click', () => this.switchCamera());
     
     // Clear cart
     document.getElementById('clearCartBtn').addEventListener('click', () => this.clearCart());
@@ -757,6 +880,148 @@ class POSSystem {
     document.getElementById('searchInput').value = '';
     document.getElementById('searchResults').style.display = 'none';
     this.showAlert(`${product.name} added to cart!`, 'success');
+  }
+  
+  // Barcode Scanner Methods
+  async toggleScanner() {
+    if (this.scannerActive) {
+      this.stopScanner();
+    } else {
+      await this.startScanner();
+    }
+  }
+  
+  async startScanner() {
+    const scannerSection = document.getElementById('scannerSection');
+    const scannerStatus = document.getElementById('scannerStatus');
+    
+    scannerSection.style.display = 'block';
+    scannerStatus.innerHTML = '<div class="spinner"></div><p>Initializing camera...</p>';
+    
+    try {
+      // Stop any existing stream
+      if (this.currentStream) {
+        this.currentStream.getTracks().forEach(track => track.stop());
+      }
+      
+      // Get camera access
+      this.currentStream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: this.currentCamera,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+      
+      // Set up QuaggaJS
+      await Quagga.init({
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: document.getElementById('barcode-scanner'),
+          constraints: {
+            facingMode: this.currentCamera
+          }
+        },
+        decoder: {
+          readers: [
+            "ean_reader",
+            "ean_8_reader",
+            "code_128_reader",
+            "code_39_reader",
+            "upc_reader",
+            "upc_e_reader"
+          ]
+        },
+        locate: true
+      }, (err) => {
+        if (err) {
+          console.error('Quagga init error:', err);
+          scannerStatus.innerHTML = '<p style="color: #dc3545;">Camera initialization failed</p>';
+          return;
+        }
+        
+        scannerStatus.innerHTML = '<p style="color: #28a745;">Camera ready - Point at barcode</p>';
+        Quagga.start();
+        this.scannerActive = true;
+      });
+      
+      // Handle barcode detection
+      Quagga.onDetected((result) => {
+        const code = result.codeResult.code;
+        this.handleBarcodeDetected(code);
+      });
+      
+    } catch (error) {
+      console.error('Camera access error:', error);
+      scannerStatus.innerHTML = `
+        <p style="color: #dc3545;">Camera access denied or not available</p>
+        <p style="font-size: 14px; margin-top: 10px;">Please allow camera access and try again</p>
+      `;
+    }
+  }
+  
+  stopScanner() {
+    if (this.scannerActive) {
+      Quagga.stop();
+      this.scannerActive = false;
+    }
+    
+    if (this.currentStream) {
+      this.currentStream.getTracks().forEach(track => track.stop());
+      this.currentStream = null;
+    }
+    
+    document.getElementById('scannerSection').style.display = 'none';
+  }
+  
+  switchCamera() {
+    this.currentCamera = this.currentCamera === 'environment' ? 'user' : 'environment';
+    this.stopScanner();
+    setTimeout(() => this.startScanner(), 500);
+  }
+  
+  async handleBarcodeDetected(barcode) {
+    // Show scanning feedback
+    const scannerStatus = document.getElementById('scannerStatus');
+    scannerStatus.innerHTML = '<p style="color: #28a745;">Barcode detected: ' + barcode + '</p>';
+    
+    // Search for product by barcode
+    try {
+      const response = await fetch(`/products?barcode=${encodeURIComponent(barcode)}&format=json`);
+      
+      if (!response.ok) throw new Error('Product search failed');
+      
+      const products = await response.json();
+      
+      if (products.length > 0) {
+        const product = products[0];
+        this.addToCart(product);
+        
+        // Visual feedback
+        scannerStatus.innerHTML = '<p style="color: #28a745;">✓ Product added: ' + product.name + '</p>';
+        
+        // Resume scanning after a brief pause
+        setTimeout(() => {
+          if (this.scannerActive) {
+            scannerStatus.innerHTML = '<p style="color: #28a745;">Camera ready - Point at barcode</p>';
+          }
+        }, 1500);
+      } else {
+        scannerStatus.innerHTML = '<p style="color: #dc3545;">Product not found for barcode: ' + barcode + '</p>';
+        
+        // Resume scanning after error
+        setTimeout(() => {
+          if (this.scannerActive) {
+            scannerStatus.innerHTML = '<p style="color: #28a745;">Camera ready - Point at barcode</p>';
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Barcode search error:', error);
+      scannerStatus.innerHTML = '<p style="color: #dc3545;">Error searching for product</p>';
+    }
   }
   
   updateQuantity(index, change) {
@@ -1026,7 +1291,7 @@ class POSSystem {
 
   showAlert(message, type) {
     const alertContainer = document.getElementById('alertContainer');
-    const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+    const alertClass = type === 'error' ? 'alert-error' : type === 'info' ? 'alert-info' : 'alert-success';
     
     alertContainer.innerHTML = `
       <div class="alert ${alertClass}">

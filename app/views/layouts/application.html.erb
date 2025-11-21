@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <%= csrf_meta_tags %>  <!-- MUST HAVE THIS -->
+    <%= csp_meta_tag %>
+
     <title><%= content_for(:title) || "Pos" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">

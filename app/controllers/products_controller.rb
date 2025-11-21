@@ -3,39 +3,45 @@ class ProductsController < ApplicationController
   before_action :set_product, only: [:edit, :update, :destroy, :show]
   before_action :set_categories, only: [:new, :create, :edit, :update]
   
-# app/controllers/products_controller.rb
-# app/controllers/products_controller.rb
-# app/controllers/products_controller.rb
-def index
-  @products = Current.shop.products.includes(:category)
-  
-  if params[:search].present?
-    @products = @products.where("name ILIKE ? OR barcode ILIKE ? OR brand ILIKE ?", 
-                               "%#{params[:search]}%", "%#{params[:search]}%", "%#{params[:search]}%")
-  end
-  
-  if params[:low_stock].present?
-    @products = @products.where("current_stock <= reorder_level")
-  end
+  def index
+    @products = Current.shop.products.includes(:category)
+    
+    # Handle barcode-specific search (for scanner)
+    if params[:barcode].present?
+      barcode = params[:barcode].strip
+      @products = @products.where("barcode = ?", barcode)
+    elsif params[:search].present?
+      # General search by name, barcode, or brand
+      search_term = "%#{params[:search]}%"
+      @products = @products.where(
+        "name ILIKE ? OR barcode ILIKE ? OR brand ILIKE ?", 
+        search_term, search_term, search_term
+      )
+    end
+    
+    if params[:low_stock].present?
+      @products = @products.where("current_stock <= reorder_level")
+    end
 
-  respond_to do |format|
-    format.html
-    format.json do
-      # Make sure we return proper JSON
-      products_data = @products.map { |p| 
-        { 
-          id: p.id, 
-          name: p.name, 
-          brand: p.brand,
-          selling_price: p.selling_price.to_f,
-          current_stock: p.current_stock.to_f,
-          barcode: p.barcode
-        } 
-      }
-      render json: products_data
+    respond_to do |format|
+      format.html
+      format.json do
+        products_data = @products.limit(50).map { |p| 
+          { 
+            id: p.id, 
+            name: p.name, 
+            brand: p.brand,
+            selling_price: p.selling_price.to_f,
+            current_stock: p.current_stock.to_f,
+            barcode: p.barcode,
+            unit: p.unit,
+            category: p.category&.name
+          } 
+        }
+        render json: products_data
+      end
     end
   end
-end
 
   def show
   end
@@ -111,8 +117,19 @@ end
     end
   end
 
+  # API endpoint for quick barcode lookup (used by POS scanner)
   def lookup
-    product = Current.shop.products.find_by(barcode: params[:barcode])
+    barcode = params[:barcode]&.strip
+    
+    if barcode.blank?
+      render json: { 
+        success: false, 
+        message: "Barcode is required"
+      }, status: :bad_request
+      return
+    end
+    
+    product = Current.shop.products.find_by(barcode: barcode)
     
     if product
       render json: {
@@ -120,17 +137,21 @@ end
         product: {
           id: product.id,
           name: product.name,
-          selling_price: product.selling_price,
-          current_stock: product.current_stock,
-          barcode: product.barcode
+          brand: product.brand,
+          selling_price: product.selling_price.to_f,
+          current_stock: product.current_stock.to_f,
+          barcode: product.barcode,
+          unit: product.unit,
+          category: product.category&.name
         }
       }
     else
       render json: { 
         success: false, 
         message: "Product not found in your inventory",
-        barcode: params[:barcode]
-      }
+        barcode: barcode,
+        suggestion: "Add this product to inventory?"
+      }, status: :not_found
     end
   end
 
@@ -188,30 +209,6 @@ end
       # Handle CSV import logic here
       redirect_to products_path, notice: "Products imported successfully!"
     end
-  end
-
-  def test_apis
-    # Test method to check all APIs
-    test_barcodes = [
-      "3017620422003", # Nutella (International)
-      "5449000000996", # Coca-Cola (International)
-      "8901030223018", # Parle-G (Indian - should work)
-      "8901491003254", # Bru Coffee (Indian - should work)
-      "6291101250128", # Almarai Juice (Middle East)
-      "6291100150193"  # Almarai Milk (Middle East)
-    ]
-    
-    results = {}
-    
-    test_barcodes.each do |barcode|
-      results[barcode] = ProductApiService.fetch_product_details(barcode)
-    end
-    
-    render json: {
-      message: "API Test Results",
-      results: results,
-      timestamp: Time.current
-    }
   end
 
   private
@@ -275,6 +272,6 @@ end
     clean_barcode = barcode.gsub(/\D/, '')
     
     # Check length (EAN-13, UPC-A, EAN-8 are common)
-    [8, 12, 13].include?(clean_barcode.length)
+    [8, 12, 13, 14].include?(clean_barcode.length)
   end
 end

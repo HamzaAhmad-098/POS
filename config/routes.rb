@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   
   resources :products do
     collection do
+      get 'lookup'  
       get 'scan'
       post 'process_scan'
       get 'lookup'
