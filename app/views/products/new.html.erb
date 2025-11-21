@@ -3,290 +3,345 @@
 <html>
 <head>
   <title>Add New Product - POS System</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Include QuaggaJS for barcode scanning -->
-  <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <%= csrf_meta_tags %>
+  
+  <!-- Using Html5-Qrcode - Better for mobile barcode scanning -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* [Keep all your existing styles - they're great!] */
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent;
+    }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f7fa;
+      background: #f8f9fa;
       min-height: 100vh;
-      padding: 20px;
+      line-height: 1.6;
     }
-    
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
+
+    .mobile-container {
+      min-height: 100vh;
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      overflow: hidden;
     }
-    
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 25px 30px;
-      background: linear-gradient(135deg, #2c3e50, #4a6582);
+
+    .mobile-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
+      padding: 20px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
     }
-    
-    .header h1 {
-      font-size: 28px;
-      font-weight: 600;
+
+    .mobile-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
     }
-    
-    .actions {
+
+    .header-actions {
       display: flex;
-      gap: 15px;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
-    
+
     .btn {
-      padding: 10px 20px;
+      padding: 14px 20px;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
+      min-height: 50px;
     }
-    
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
+
+    .btn-sm { padding: 12px 16px; min-height: 44px; font-size: 14px; }
+    .btn-primary { background: #007bff; color: white; box-shadow: 0 4px 15px rgba(0,123,255,0.3); }
+    .btn-success { background: #28a745; color: white; box-shadow: 0 4px 15px rgba(40,167,69,0.3); }
+    .btn-info { background: #17a2b8; color: white; box-shadow: 0 4px 15px rgba(23,162,184,0.3); }
+    .btn-warning { background: #ffc107; color: #212529; box-shadow: 0 4px 15px rgba(255,193,7,0.3); }
+    .btn-danger { background: #dc3545; color: white; box-shadow: 0 4px 15px rgba(220,53,69,0.3); }
+
+    .main-content {
+      padding: 20px 16px;
+      max-width: 500px;
+      margin: 0 auto;
+      width: 100%;
     }
-    
-    .btn-secondary:hover { background: #5a6268; }
-    
-    .btn-primary {
-      background: #007bff;
-      color: white;
-    }
-    
-    .btn-primary:hover { background: #0056b3; }
-    
-    .btn-success {
-      background: #28a745;
-      color: white;
-    }
-    
-    .btn-success:hover { background: #218838; }
-    
-    .btn-info {
-      background: #17a2b8;
-      color: white;
-    }
-    
-    .btn-info:hover { background: #138496; }
-    
-    .btn-warning {
-      background: #ffc107;
-      color: #212529;
-    }
-    
-    .btn-warning:hover { background: #e0a800; }
-    
-    .btn-outline {
-      background: transparent;
-      border: 2px solid #007bff;
-      color: #007bff;
-    }
-    
-    .btn-outline:hover {
-      background: #007bff;
-      color: white;
-    }
-    
-    .product-form-container {
-      padding: 30px;
-    }
-    
+
     .form-section {
       background: white;
-      border-radius: 10px;
-      padding: 25px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      margin-bottom: 25px;
+      border-radius: 16px;
+      padding: 24px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       border: 1px solid #e9ecef;
     }
-    
-    .form-section h3 {
-      font-size: 20px;
-      color: #2c3e50;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #f1f3f4;
+
+    .section-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-    
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: 12px;
       margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f8f9fa;
     }
-    
+
+    .section-header h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .section-icon {
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
     .form-group {
       margin-bottom: 20px;
     }
-    
+
     .form-group label {
       display: block;
       margin-bottom: 8px;
       font-weight: 600;
       color: #2c3e50;
+      font-size: 15px;
     }
-    
+
     .form-control {
       width: 100%;
-      padding: 12px 15px;
+      padding: 16px;
       border: 2px solid #e9ecef;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 16px;
-      transition: border-color 0.3s;
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+      -webkit-appearance: none;
     }
-    
+
     .form-control:focus {
       outline: none;
       border-color: #007bff;
+      background: white;
       box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
     }
-    
-    .input-group {
+
+    /* Scanner Section - CRITICAL FIXES */
+    .scanner-section {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      z-index: 10000;
+      flex-direction: column;
+    }
+
+    .scanner-header {
+      background: rgba(0,0,0,0.9);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      z-index: 10001;
+    }
+
+    #qr-reader {
+      flex: 1;
+      width: 100%;
+      position: relative;
       display: flex;
+      justify-content: center;
       align-items: center;
     }
-    
-    .input-group-text {
-      background: #f8f9fa;
-      border: 2px solid #e9ecef;
-      border-right: none;
-      padding: 0 15px;
-      border-radius: 8px 0 0 8px;
-      color: #6c757d;
-      font-weight: 500;
+
+    /* Override Html5-Qrcode default styles */
+    #qr-reader video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
     }
-    
-    .input-group .form-control {
-      border-radius: 0 8px 8px 0;
+
+    #qr-reader__dashboard_section {
+      display: none !important;
     }
-    
+
+    .scanner-frame-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10001;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .scanner-frame {
+      width: 80%;
+      max-width: 300px;
+      height: 200px;
+      border: 3px solid #28a745;
+      border-radius: 20px;
+      position: relative;
+      box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { border-color: #28a745; }
+      50% { border-color: #20c997; }
+    }
+
+    .scanner-corners {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .corner {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border: 4px solid #28a745;
+    }
+
+    .corner.top-left { top: -3px; left: -3px; border-right: none; border-bottom: none; }
+    .corner.top-right { top: -3px; right: -3px; border-left: none; border-bottom: none; }
+    .corner.bottom-left { bottom: -3px; left: -3px; border-right: none; border-top: none; }
+    .corner.bottom-right { bottom: -3px; right: -3px; border-left: none; border-top: none; }
+
+    .scanner-hint {
+      color: white;
+      margin-top: 30px;
+      font-size: 16px;
+      text-align: center;
+      padding: 0 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 15px 25px;
+      border-radius: 25px;
+      font-weight: 600;
+    }
+
+    .scanner-controls {
+      display: flex;
+      gap: 15px;
+      padding: 20px;
+      background: rgba(0,0,0,0.9);
+      z-index: 10001;
+    }
+
+    .scanner-controls .btn {
+      flex: 1;
+    }
+
+    .barcode-section {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
     .barcode-input-group {
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
-    
+
     .barcode-input-group .form-control {
       flex: 1;
+      background: rgba(255,255,255,0.95);
+      border: none;
+      color: #2c3e50;
     }
-    
-    .quick-pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-    }
-    
-    .form-actions {
-      margin-top: 30px;
-      padding-top: 25px;
-      border-top: 1px solid #e9ecef;
-    }
-    
-    .action-buttons {
+
+    .barcode-validation {
       display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-    
-    .btn-lg {
-      padding: 15px 25px;
-      font-size: 18px;
-    }
-    
-    .barcode-highlight {
-      background: #007bff;
-      color: white;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-family: monospace;
-      font-size: 18px;
-      margin-left: 10px;
-    }
-    
-    .alert {
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 25px;
-      border-left: 5px solid;
-    }
-    
-    .alert-success {
-      background: #d4edda;
-      color: #155724;
-      border-color: #28a745;
-    }
-    
-    .alert-warning {
-      background: #fff3cd;
-      color: #856404;
-      border-color: #ffc107;
-    }
-    
-    .alert-info {
-      background: #d1ecf1;
-      color: #0c5460;
-      border-color: #17a2b8;
-    }
-    
-    .alert-danger {
-      background: #f8d7da;
-      color: #721c24;
-      border-color: #dc3545;
-    }
-    
-    .api-success, .api-warning, .api-error, .api-loading {
-      display: flex;
-      align-items: flex-start;
-      gap: 15px;
-    }
-    
-    .api-icon {
-      font-size: 24px;
-      flex-shrink: 0;
-    }
-    
-    .api-content {
-      flex: 1;
-    }
-    
-    .api-content h4 {
-      margin: 0 0 5px 0;
-    }
-    
-    .api-content p {
-      margin: 0;
-    }
-    
-    .product-preview {
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
       margin-top: 10px;
     }
-    
-    .product-image-preview {
-      max-width: 100px;
-      max-height: 100px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
     }
-    
+
+    .form-actions {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 20px 16px;
+      border-top: 1px solid #e9ecef;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+      margin: 0 -16px -20px;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .action-buttons .btn {
+      flex: 1;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .action-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      border: 2px solid #e9ecef;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .action-card:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .action-icon { font-size: 32px; margin-bottom: 10px; }
+    .action-text { font-weight: 600; color: #2c3e50; font-size: 14px; }
+
     .spinner {
       border: 3px solid #f3f3f3;
       border-top: 3px solid #007bff;
@@ -294,609 +349,534 @@
       width: 40px;
       height: 40px;
       animation: spin 1s linear infinite;
-      margin: 20px auto;
     }
-    
-    /* Barcode Scanner Styles */
-    .scanner-section {
-      display: none;
-      margin-top: 15px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border: 2px solid #e9ecef;
-    }
-    
-    .scanner-container {
-      position: relative;
-      width: 100%;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    
-    #barcode-scanner {
-      width: 100%;
-      height: 300px;
-      background: #000;
-      border-radius: 8px;
-    }
-    
-    .scanner-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      background: rgba(0, 0, 0, 0.5);
-    }
-    
-    .scanner-controls {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-      justify-content: center;
-    }
-    
-    .scanner-frame {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 70%;
-      height: 150px;
-      border: 2px solid #28a745;
-      border-radius: 8px;
-      box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.3);
-    }
-    
-    .scanner-loading {
-      text-align: center;
-      padding: 20px;
-    }
-    
-    .form-text {
-      display: block;
-      margin-top: 5px;
-      color: #6c757d;
-      font-size: 14px;
-    }
-    
-    .barcode-validation {
-      margin-top: 5px;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    
-    .barcode-valid {
-      color: #28a745;
-    }
-    
-    .barcode-invalid {
-      color: #dc3545;
-    }
-    
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 15px 25px;
+      border-radius: 25px;
+      z-index: 10002;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      max-width: 90%;
+      text-align: center;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { transform: translate(-50%, -100px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+
+    .toast.success { background: #28a745; color: white; }
+    .toast.error { background: #dc3545; color: white; }
+    .toast.info { background: #17a2b8; color: white; }
+
     @media (max-width: 768px) {
       .form-row {
         grid-template-columns: 1fr;
-      }
-      
-      .quick-pricing-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .action-buttons {
-        flex-direction: column;
-      }
-      
-      .action-buttons .btn {
-        width: 100%;
-        text-align: center;
-        justify-content: center;
-      }
-      
-      .header {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-      }
-      
-      .barcode-input-group {
-        flex-direction: column;
-      }
-      
-      #barcode-scanner {
-        height: 250px;
       }
     }
   </style>
 </head>
 <body>
-
-<div class="container">
-  <div class="header">
-    <h1>
-      <% if @product.barcode.present? %>
-        ➕ Add Product - Barcode: <span class="barcode-highlight"><%= @product.barcode %></span>
-      <% else %>
-        ➕ Add New Product
-      <% end %>
-    </h1>
-    <div class="actions">
-      <%= link_to "← Back to Products", products_path, class: "btn btn-secondary" %>
-      <%= link_to "📷 Scan Another", scan_products_path, class: "btn btn-primary" %>
+  <div class="mobile-container">
+    <!-- Header -->
+    <div class="mobile-header">
+      <h1>➕ Add New Product</h1>
+      <div class="header-actions">
+        <a href="/products" class="btn btn-sm btn-primary">← Products</a>
+        <a href="/products/scan" class="btn btn-sm btn-info">📷 Scan Page</a>
+      </div>
     </div>
-  </div>
 
-  <div class="product-form-container">
-    <%= form_with model: @product, local: true, html: { class: "product-form", id: "product-form" } do |form| %>
-      
-      <!-- Barcode Section -->
-      <div class="form-section">
-        <h3>📦 Product Identification</h3>
-        
-        <div class="form-group">
-          <%= form.label :barcode, "Barcode *" %>
-          <div class="barcode-input-group">
-            <%= form.text_field :barcode, 
-                  required: true,
-                  class: "form-control",
-                  placeholder: "Scan or enter barcode",
-                  id: "product_barcode",
-                  pattern: "[0-9]+",
-                  title: "Please enter only numbers" %>
-            <button type="button" id="scanBtn" class="btn btn-info">
-              📷 Scan Barcode
-            </button>
-          </div>
-          <div id="barcodeValidation" class="barcode-validation">
-            <span id="barcodeStatusIcon">🔍</span>
-            <span id="barcodeStatusText">Scan or enter barcode numbers</span>
-          </div>
-          <small class="form-text">Scan the barcode or enter the numbers printed below the barcode</small>
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <div class="action-card" onclick="productForm.openScanner()">
+          <div class="action-icon">📷</div>
+          <div class="action-text">Scan Barcode</div>
         </div>
+        <div class="action-card" onclick="clearForm()">
+          <div class="action-icon">🗑️</div>
+          <div class="action-text">Clear Form</div>
+        </div>
+      </div>
+
+      <%= form_with model: @product, local: true, html: { class: "product-form", id: "product-form" } do |form| %>
         
-        <!-- Barcode Scanner Section -->
-        <div id="scannerSection" class="scanner-section">
-          <div class="scanner-container">
-            <div id="barcode-scanner"></div>
-            <div class="scanner-frame"></div>
-            <div class="scanner-overlay">
-              <h3 style="color: white; margin-bottom: 10px;">Barcode Scanner</h3>
-              <p style="color: white; text-align: center;">Point camera at barcode</p>
-              <div id="scannerStatus" class="scanner-loading">
-                <div class="spinner"></div>
-                <p>Initializing camera...</p>
-              </div>
+        <!-- Barcode Section -->
+        <div class="barcode-section">
+          <div class="form-group mb-0">
+            <%= form.label :barcode, "PRODUCT BARCODE", style: "color: white;" %>
+            <div class="barcode-input-group">
+              <%= form.text_field :barcode, 
+                    required: true,
+                    class: "form-control",
+                    placeholder: "Scan or enter barcode",
+                    id: "product_barcode",
+                    pattern: "[0-9]+",
+                    inputmode: "numeric" %>
+              <button type="button" class="btn btn-info btn-sm" onclick="productForm.openScanner()">
+                📷
+              </button>
+            </div>
+            <div id="barcodeValidation" class="barcode-validation">
+              <span id="barcodeStatusIcon">🔍</span>
+              <span id="barcodeStatusText">Scan or enter barcode</span>
             </div>
           </div>
-          <div class="scanner-controls">
-            <button class="btn btn-success" id="stopScannerBtn">Stop Scanner</button>
-            <button class="btn btn-warning" id="switchCameraBtn">Switch Camera</button>
-          </div>
-          <div style="text-align: center; margin-top: 15px;">
-            <p style="color: #6c757d; font-size: 14px;">
-              💡 <strong>Tip:</strong> Ensure good lighting and hold the barcode steady within the frame
-            </p>
-          </div>
         </div>
 
-        <div class="form-row">
+        <!-- Product Details -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">📦</div>
+            <h3>Product Information</h3>
+          </div>
+
           <div class="form-group">
             <%= form.label :name, "Product Name *" %>
             <%= form.text_field :name, 
                   required: true, 
                   class: "form-control",
-                  placeholder: "Product name",
+                  placeholder: "Enter product name",
                   id: "product_name" %>
           </div>
 
-          <div class="form-group">
-            <%= form.label :brand, "Brand" %>
-            <%= form.text_field :brand, 
-                  class: "form-control",
-                  placeholder: "Brand name",
-                  id: "product_brand" %>
+          <div class="form-row">
+            <div class="form-group">
+              <%= form.label :brand, "Brand" %>
+              <%= form.text_field :brand, 
+                    class: "form-control",
+                    placeholder: "Brand name",
+                    id: "product_brand" %>
+            </div>
+
+            <div class="form-group">
+              <%= form.label :category_id, "Category" %>
+              <%= form.collection_select :category_id, @categories, :id, :name, 
+                    { include_blank: "Select" }, 
+                    class: "form-control" %>
+            </div>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <%= form.label :category_id, "Category" %>
-            <%= form.collection_select :category_id, @categories, :id, :name, 
-                  { include_blank: "Select Category" }, 
-                  class: "form-control",
-                  id: "product_category_id" %>
-            <small class="form-text">
-              <%= link_to "➕ Add New Category", new_category_path, target: "_blank" %>
-            </small>
+        <!-- Pricing & Stock -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">💰</div>
+            <h3>Pricing & Stock</h3>
           </div>
 
-          <div class="form-group">
-            <%= form.label :unit, "Unit" %>
-            <%= form.select :unit, 
-                  options_for_select(['pcs', 'kg', 'g', 'L', 'ml', 'pack', 'box', 'bottle'], @product.unit),
-                  { include_blank: "Select Unit" }, 
-                  class: "form-control",
-                  id: "product_unit" %>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pricing & Stock -->
-      <div class="form-section">
-        <h3>💰 Pricing & Stock</h3>
-        <div class="quick-pricing-grid">
-          <div class="form-group">
-            <%= form.label :purchase_price_cents, "Cost Price (Rs)" %>
-            <div class="input-group">
-              <span class="input-group-text">Rs.</span>
+          <div class="form-row">
+            <div class="form-group">
+              <%= form.label :purchase_price_cents, "Cost (Rs)" %>
               <%= form.number_field :purchase_price_cents, 
                     step: 0.01, 
                     class: "form-control",
                     placeholder: "0.00",
-                    id: "product_purchase_price" %>
+                    inputmode: "decimal" %>
             </div>
-          </div>
 
-          <div class="form-group">
-            <%= form.label :selling_price_cents, "Selling Price (Rs) *" %>
-            <div class="input-group">
-              <span class="input-group-text">Rs.</span>
+            <div class="form-group">
+              <%= form.label :selling_price_cents, "Price (Rs) *" %>
               <%= form.number_field :selling_price_cents, 
                     step: 0.01, 
                     required: true,
                     class: "form-control",
                     placeholder: "0.00",
-                    id: "product_selling_price" %>
+                    inputmode: "decimal" %>
             </div>
           </div>
 
-          <div class="form-group">
-            <%= form.label :current_stock, "Stock Qty *" %>
-            <%= form.number_field :current_stock, 
-                  step: 1, 
-                  required: true,
-                  class: "form-control",
-                  placeholder: "0",
-                  value: @product.current_stock || 0,
-                  id: "product_stock" %>
-          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <%= form.label :current_stock, "Stock *" %>
+              <%= form.number_field :current_stock, 
+                    step: 1, 
+                    required: true,
+                    class: "form-control",
+                    value: @product.current_stock || 0,
+                    inputmode: "numeric" %>
+            </div>
 
-          <div class="form-group">
-            <%= form.label :reorder_level, "Low Stock Alert" %>
-            <%= form.number_field :reorder_level, 
-                  step: 1, 
-                  class: "form-control",
-                  placeholder: "5",
-                  id: "product_reorder_level" %>
-            <small class="form-text">Get notified when stock reaches this level</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- Additional Details -->
-      <div class="form-section">
-        <h3>⚙️ Additional Details</h3>
-        <div class="form-row">
-          <div class="form-group">
-            <%= form.label :expiry_date, "Expiry Date" %>
-            <%= form.date_field :expiry_date, class: "form-control", id: "product_expiry_date" %>
-          </div>
-
-          <div class="form-group">
-            <%= form.label :sku, "SKU (Optional)" %>
-            <%= form.text_field :sku, class: "form-control", placeholder: "Stock Keeping Unit", id: "product_sku" %>
+            <div class="form-group">
+              <%= form.label :unit, "Unit" %>
+              <%= form.select :unit, 
+                    options_for_select(['pcs', 'kg', 'L', 'pack', 'box'], @product.unit),
+                    { include_blank: "Unit" }, 
+                    class: "form-control" %>
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <%= form.label :photo, "Product Photo" %>
-          <%= form.file_field :photo, class: "form-control", id: "product_photo" %>
-          <small class="form-text">Optional: Upload product image</small>
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <div class="action-buttons">
+            <%= form.submit "💾 Save", 
+                  class: "btn btn-success",
+                  data: { turbo: false } %>
+            
+            <%= form.submit "💾 Save & New", 
+                  name: "save_and_scan", 
+                  class: "btn btn-primary",
+                  data: { turbo: false } %>
+          </div>
         </div>
-      </div>
-
-      <!-- Form Actions -->
-      <div class="form-actions">
-        <div class="action-buttons">
-          <%= form.submit "💾 Save Product", 
-                class: "btn btn-success btn-lg",
-                data: { turbo: false },
-                id: "save_product_btn" %>
-          
-          <%= form.submit "💾 Save & Scan Another", 
-                name: "save_and_scan", 
-                class: "btn btn-primary btn-lg",
-                data: { turbo: false },
-                id: "save_scan_btn" %>
-          
-          <%= link_to "📷 Scan Different", scan_products_path, class: "btn btn-outline btn-lg" %>
-        </div>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
   </div>
-</div>
+
+  <!-- Barcode Scanner Modal -->
+  <div id="scannerSection" class="scanner-section">
+    <div class="scanner-header">
+      <h3>📷 Scan Barcode</h3>
+      <p id="scannerStatus">Starting camera...</p>
+    </div>
+    
+    <div id="qr-reader"></div>
+    
+    <div class="scanner-frame-overlay">
+      <div class="scanner-frame">
+        <div class="scanner-corners">
+          <div class="corner top-left"></div>
+          <div class="corner top-right"></div>
+          <div class="corner bottom-left"></div>
+          <div class="corner bottom-right"></div>
+        </div>
+      </div>
+      <div class="scanner-hint">Align barcode within frame</div>
+    </div>
+    
+    <div class="scanner-controls">
+      <button class="btn btn-danger" onclick="productForm.closeScanner()">❌ Cancel</button>
+      <button class="btn btn-warning" onclick="productForm.switchCamera()">🔄 Flip</button>
+    </div>
+  </div>
 
 <script>
-// Product Form with Barcode Scanner
+// Production-Ready Barcode Scanner
 class ProductForm {
   constructor() {
-    this.scannerActive = false;
-    this.currentStream = null;
-    this.currentCamera = 'environment'; // 'environment' for rear camera, 'user' for front
+    this.scanner = null;
+    this.isBackCamera = true;
+    this.isScanning = false;
     this.lastScannedCode = null;
+    this.scanCooldown = false;
     this.init();
   }
   
   init() {
-    this.setupEventListeners();
     this.setupBarcodeValidation();
-  }
-  
-  setupEventListeners() {
-    // Barcode Scanner
-    document.getElementById('scanBtn').addEventListener('click', () => this.toggleScanner());
-    document.getElementById('stopScannerBtn').addEventListener('click', () => this.stopScanner());
-    document.getElementById('switchCameraBtn').addEventListener('click', () => this.switchCamera());
-    
-    // Barcode field validation
-    const barcodeField = document.getElementById('product_barcode');
-    barcodeField.addEventListener('input', () => this.validateBarcode(barcodeField.value));
+    this.setupFormEnhancements();
   }
   
   setupBarcodeValidation() {
-    // Validate initial barcode value if present
     const barcodeField = document.getElementById('product_barcode');
-    if (barcodeField.value) {
-      this.validateBarcode(barcodeField.value);
+    if (barcodeField) {
+      barcodeField.addEventListener('input', (e) => {
+        this.validateBarcode(e.target.value);
+      });
+      
+      // Validate on load if value exists
+      if (barcodeField.value) {
+        this.validateBarcode(barcodeField.value);
+      }
+    }
+  }
+  
+  setupFormEnhancements() {
+    // Auto-focus name field when barcode is filled
+    const barcodeField = document.getElementById('product_barcode');
+    const nameField = document.getElementById('product_name');
+    
+    if (barcodeField && nameField) {
+      barcodeField.addEventListener('change', () => {
+        if (barcodeField.value.length >= 8 && !nameField.value) {
+          setTimeout(() => nameField.focus(), 100);
+        }
+      });
     }
   }
   
   validateBarcode(barcode) {
     const statusIcon = document.getElementById('barcodeStatusIcon');
     const statusText = document.getElementById('barcodeStatusText');
-    const validationDiv = document.getElementById('barcodeValidation');
-    
-    // Remove previous validation classes
-    validationDiv.classList.remove('barcode-valid', 'barcode-invalid');
     
     if (!barcode) {
       statusIcon.textContent = '🔍';
-      statusText.textContent = 'Scan or enter barcode numbers';
-      return;
+      statusText.textContent = 'Scan or enter barcode';
+      return false;
     }
     
-    // Check if barcode contains only numbers
-    if (/^\d+$/.test(barcode)) {
+    // Check if valid barcode (8-20 digits)
+    const isValid = /^\d{8,20}$/.test(barcode);
+    
+    if (isValid) {
       statusIcon.textContent = '✅';
-      statusText.textContent = 'Valid barcode format';
-      validationDiv.classList.add('barcode-valid');
+      statusText.textContent = 'Valid barcode';
+      return true;
     } else {
       statusIcon.textContent = '❌';
-      statusText.textContent = 'Barcode should contain only numbers';
-      validationDiv.classList.add('barcode-invalid');
+      statusText.textContent = 'Enter 8-20 digits';
+      return false;
     }
   }
   
-  // Barcode Scanner Methods
-  async toggleScanner() {
-    if (this.scannerActive) {
-      this.stopScanner();
-    } else {
-      await this.startScanner();
-    }
-  }
-  
-  async startScanner() {
+  async openScanner() {
+    if (this.isScanning) return;
+    
     const scannerSection = document.getElementById('scannerSection');
     const scannerStatus = document.getElementById('scannerStatus');
     
-    scannerSection.style.display = 'block';
-    scannerStatus.innerHTML = '<div class="spinner"></div><p>Initializing camera...</p>';
+    scannerSection.style.display = 'flex';
+    scannerStatus.textContent = 'Starting camera...';
+    this.isScanning = true;
     
     try {
-      // Stop any existing stream
-      if (this.currentStream) {
-        this.currentStream.getTracks().forEach(track => track.stop());
+      // Create scanner instance
+      this.scanner = new Html5Qrcode("qr-reader");
+      
+      // Get available cameras
+      const devices = await Html5Qrcode.getCameras();
+      
+      if (!devices || devices.length === 0) {
+        throw new Error('No cameras found');
       }
       
-      // Get camera access
-      this.currentStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: this.currentCamera,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      });
+      // Select camera
+      const cameraId = this.isBackCamera && devices.length > 1 ? devices[devices.length - 1].id : devices[0].id;
       
-      // Set up QuaggaJS with improved configuration
-      await Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: document.getElementById('barcode-scanner'),
-          constraints: {
-            facingMode: this.currentCamera,
-            width: { min: 640, ideal: 1280, max: 1920 },
-            height: { min: 480, ideal: 720, max: 1080 }
-          }
-        },
-        decoder: {
-          readers: [
-            "ean_reader",
-            "ean_8_reader", 
-            "code_128_reader",
-            "code_39_reader",
-            "upc_reader",
-            "upc_e_reader"
-          ],
-          multiple: false
-        },
-        locate: true,
-        numOfWorkers: 4,
-        frequency: 10,
-        locator: {
-          patchSize: "medium",
-          halfSample: true
+      // Optimized config for fast barcode scanning
+      const config = {
+        fps: 30, // Higher FPS for faster detection
+        qrbox: { width: 250, height: 150 },
+        aspectRatio: 1.7,
+        disableFlip: false,
+        videoConstraints: {
+          facingMode: this.isBackCamera ? "environment" : "user",
+          advanced: [{
+            focusMode: "continuous"
+          }]
         }
-      }, (err) => {
-        if (err) {
-          console.error('Quagga init error:', err);
-          scannerStatus.innerHTML = '<p style="color: #dc3545;">Camera initialization failed</p>';
-          return;
-        }
-        
-        scannerStatus.innerHTML = '<p style="color: #28a745;">Camera ready - Point at barcode</p>';
-        Quagga.start();
-        this.scannerActive = true;
-      });
+      };
       
-      // Handle barcode detection with improved validation
-      Quagga.onDetected((result) => {
-        if (!result.codeResult || !result.codeResult.code) {
-          return;
+      // Start scanner
+      await this.scanner.start(
+        cameraId,
+        config,
+        (decodedText, decodedResult) => {
+          this.onScanSuccess(decodedText, decodedResult);
+        },
+        (errorMessage) => {
+          // Silent error handling - expected when no code is in view
         }
-        
-        const code = result.codeResult.code;
-        const format = result.codeResult.format;
-        
-        // Prevent duplicate scans of the same code
-        if (code === this.lastScannedCode) {
-          return;
-        }
-        
-        this.lastScannedCode = code;
-        this.handleBarcodeDetected(code, format);
-      });
+      );
       
-      // Handle process frame for debugging
-      Quagga.onProcessed((result) => {
-        if (result && result.boxes) {
-          const drawingCtx = Quagga.canvas.ctx.overlay;
-          const drawingCanvas = Quagga.canvas.dom.overlay;
-          
-          drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
-          
-          if (result.boxes) {
-            result.boxes.filter(box => box !== result.box).forEach(box => {
-              Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
-            });
-          }
-          
-          if (result.box) {
-            Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "#00F", lineWidth: 2});
-          }
-          
-          if (result.codeResult && result.codeResult.code) {
-            Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 3});
-          }
-        }
-      });
+      scannerStatus.textContent = '✓ Camera ready - Point at barcode';
+      scannerStatus.style.color = '#28a745';
       
     } catch (error) {
-      console.error('Camera access error:', error);
-      scannerStatus.innerHTML = `
-        <p style="color: #dc3545;">Camera access denied or not available</p>
-        <p style="font-size: 14px; margin-top: 10px;">Please allow camera access and try again</p>
-      `;
+      console.error('Scanner error:', error);
+      this.handleScannerError(error);
     }
   }
   
-  stopScanner() {
-    if (this.scannerActive) {
-      Quagga.stop();
-      this.scannerActive = false;
+  handleScannerError(error) {
+    const scannerStatus = document.getElementById('scannerStatus');
+    
+    let message = 'Camera error. ';
+    
+    if (error.message.includes('NotAllowedError') || error.message.includes('Permission denied')) {
+      message = '❌ Camera permission denied. Please allow camera access and try again.';
+    } else if (error.message.includes('NotFoundError') || error.message.includes('No cameras found')) {
+      message = '❌ No camera found on this device.';
+    } else if (error.message.includes('NotReadableError')) {
+      message = '❌ Camera is being used by another app.';
+    } else if (error.message.includes('InsecureContextError') || error.message.includes('secure')) {
+      message = '❌ Camera requires HTTPS connection.';
+    } else {
+      message = '❌ ' + error.message;
     }
     
-    if (this.currentStream) {
-      this.currentStream.getTracks().forEach(track => track.stop());
-      this.currentStream = null;
+    scannerStatus.textContent = message;
+    scannerStatus.style.color = '#dc3545';
+    
+    this.showToast(message, 'error');
+    
+    setTimeout(() => {
+      this.closeScanner();
+    }, 3000);
+  }
+  
+  onScanSuccess(decodedText, decodedResult) {
+    // Prevent duplicate scans
+    if (this.scanCooldown) return;
+    
+    // Clean the barcode
+    const cleanBarcode = decodedText.replace(/\D/g, '');
+    
+    // Validate barcode length
+    if (cleanBarcode.length < 8 || cleanBarcode.length > 20) {
+      console.log('Invalid barcode length:', cleanBarcode.length);
+      return;
     }
     
-    document.getElementById('scannerSection').style.display = 'none';
+    // Prevent rapid duplicate scans
+    if (cleanBarcode === this.lastScannedCode) {
+      return;
+    }
+    
+    this.lastScannedCode = cleanBarcode;
+    this.scanCooldown = true;
+    
+    // Update status
+    const scannerStatus = document.getElementById('scannerStatus');
+    scannerStatus.textContent = '✅ Barcode Scanned!';
+    scannerStatus.style.color = '#28a745';
+    
+    // Set barcode value
+    document.getElementById('product_barcode').value = cleanBarcode;
+    this.validateBarcode(cleanBarcode);
+    
+    // Play success sound (optional)
+    this.playBeep();
+    
+    // Show success toast
+    this.showToast('✓ Barcode scanned: ' + cleanBarcode, 'success');
+    
+    // Close scanner after short delay
+    setTimeout(() => {
+      this.closeScanner();
+      
+      // Focus name field
+      const nameField = document.getElementById('product_name');
+      if (nameField) {
+        nameField.focus();
+      }
+    }, 1000);
+  }
+  
+  async switchCamera() {
+    if (!this.isScanning) return;
+    
+    this.isBackCamera = !this.isBackCamera;
+    await this.closeScanner();
+    
+    // Small delay before reopening
+    setTimeout(() => {
+      this.openScanner();
+    }, 300);
+  }
+  
+  async closeScanner() {
+    if (this.scanner) {
+      try {
+        await this.scanner.stop();
+        this.scanner.clear();
+      } catch (error) {
+        console.log('Scanner stop error:', error);
+      }
+      this.scanner = null;
+    }
+    
+    const scannerSection = document.getElementById('scannerSection');
+    scannerSection.style.display = 'none';
+    
+    this.isScanning = false;
+    this.scanCooldown = false;
     this.lastScannedCode = null;
   }
   
-  switchCamera() {
-    this.currentCamera = this.currentCamera === 'environment' ? 'user' : 'environment';
-    this.stopScanner();
-    setTimeout(() => this.startScanner(), 500);
+  playBeep() {
+    // Create simple beep sound
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      gainNode.gain.value = 0.1;
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    } catch (error) {
+      console.log('Audio not supported');
+    }
   }
   
-  handleBarcodeDetected(barcode, format) {
-    // Show scanning feedback
-    const scannerStatus = document.getElementById('scannerStatus');
-    scannerStatus.innerHTML = `<p style="color: #28a745;">Barcode detected: ${barcode} (${format})</p>`;
+  showToast(message, type = 'info') {
+    // Remove existing toasts
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(toast => toast.remove());
     
-    // Clean the barcode - remove any non-numeric characters
-    const cleanBarcode = barcode.replace(/\D/g, '');
+    // Create toast
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
     
-    // Set the barcode value in the form
-    document.getElementById('product_barcode').value = cleanBarcode;
+    document.body.appendChild(toast);
     
-    // Validate the barcode
-    this.validateBarcode(cleanBarcode);
-    
-    // Visual feedback
-    scannerStatus.innerHTML = `<p style="color: #28a745;">✅ Barcode captured: ${cleanBarcode}</p>`;
-    
-    // Stop scanner immediately after successful barcode capture
+    // Auto-remove after 3 seconds
     setTimeout(() => {
-      this.stopScanner();
-      
-      // Focus on the product name field for quick entry
-      document.getElementById('product_name').focus();
-    }, 1000);
+      if (toast.parentNode) {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translate(-50%, -100px)';
+        setTimeout(() => toast.remove(), 300);
+      }
+    }, 3000);
   }
 }
 
-// Initialize Product Form
-const productForm = new ProductForm();
+// Global functions
+function clearForm() {
+  if (confirm('Clear all fields?')) {
+    document.getElementById('product-form').reset();
+    productForm.validateBarcode('');
+    productForm.showToast('Form cleared', 'info');
+  }
+}
 
-// Additional form enhancements
+// Initialize
+let productForm;
+
 document.addEventListener('DOMContentLoaded', function() {
-  // Auto-focus on barcode field if empty
+  productForm = new ProductForm();
+  
+  // Auto-focus barcode field
   const barcodeField = document.getElementById('product_barcode');
   if (barcodeField && !barcodeField.value) {
-    barcodeField.focus();
+    setTimeout(() => barcodeField.focus(), 500);
   }
-  
-  // Quick navigation with Enter key
-  if (barcodeField) {
-    barcodeField.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const nameField = document.getElementById('product_name');
-        if (nameField) nameField.focus();
-      }
-    });
+});
+
+// Handle visibility changes
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden && productForm && productForm.isScanning) {
+    productForm.closeScanner();
   }
-  
-  // Form submission validation
-  const form = document.getElementById('product-form');
-  form.addEventListener('submit', function(e) {
-    const barcode = document.getElementById('product_barcode').value;
-    if (!barcode || !/^\d+$/.test(barcode)) {
-      e.preventDefault();
-      alert('Please enter a valid barcode containing only numbers');
-      document.getElementById('product_barcode').focus();
-    }
-  });
+});
+
+// Prevent accidental back navigation
+window.addEventListener('beforeunload', function(e) {
+  if (productForm && productForm.isScanning) {
+    productForm.closeScanner();
+  }
 });
 </script>
-
 </body>
 </html>
