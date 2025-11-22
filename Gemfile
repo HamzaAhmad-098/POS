@@ -37,7 +37,7 @@ gem "solid_cache"
 gem "solid_queue"
 gem "solid_cable"
 # Gemfile
-gem 'httparty', '~> 0.21.0'  # For API requests
+gem 'httparty', '~> 0.23.2'  # For API requests
 gem 'nokogiri', '~> 1.13'    # For HTML parsing (if needed)
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
