@@ -5,7 +5,7 @@ gem "rails", "~> 8.0.2"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use sqlite3 as the database for Active Record
-gem "sqlite3", ">= 2.1"
+#gem "sqlite3", ">= 2.1"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
@@ -20,7 +20,7 @@ gem "jbuilder"
 gem 'devise'               # auth (optional but recommended)
 gem 'bcrypt', '~> 3.1.16'  # password hashing
 gem 'pundit'               # authorization (optional)
-gem 'pg'                   # PostgreSQL adapter
+         # PostgreSQL adapter
 gem 'money-rails'          # money/cents if you like
 gem 'active_storage_validations' # optional image validations
 gem 'sidekiq'              # background jobs (optional)
@@ -41,6 +41,9 @@ gem 'httparty', '~> 0.21.0'  # For API requests
 gem 'nokogiri', '~> 1.13'    # For HTML parsing (if needed)
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
+gem "sqlite3", group: :development
+gem "pg", group: :production
+
 
 # Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
 gem "kamal", require: false

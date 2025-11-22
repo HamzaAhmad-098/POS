@@ -15,5 +15,8 @@ test:
   database: pos_test
 
 production:
-  <<: *default
-  database: pos_production
+  adapter: postgresql
+  encoding: unicode
+  database: <%= ENV["DATABASE_URL"] %>
+  pool: 5
+
