@@ -13,4 +13,9 @@ test:
   database: pos_test
 
 production:
-  url: <%= ENV['DATABASE_URL'] %>  # ✅ CORRECT - uses entire URL
+  primary:
+    <<: *default
+    url: <%= ENV['DATABASE_URL'] %>
+  cable:
+    <<: *default
+    url: <%= ENV['DATABASE_URL'] %>
