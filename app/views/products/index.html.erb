@@ -493,7 +493,6 @@
       <div class="header-actions">
         <%= link_to "➕ Add Product", new_product_path, class: "btn btn-primary btn-sm" %>
         <%= link_to "📤 Import", bulk_import_products_path, class: "btn btn-secondary btn-sm" %>
-        <%= link_to "📷 Scan", scan_products_path, class: "btn btn-info btn-sm" %>
       </div>
     </div>
 
@@ -530,8 +529,6 @@
                 class: "filter-btn #{'active' unless params[:low_stock]}" %>
           <%= link_to "Low Stock", products_path(low_stock: true), 
                 class: "filter-btn #{'active' if params[:low_stock]}" %>
-          <%= link_to "Clear Filters", products_path, 
-                class: "filter-btn" if params[:search] || params[:low_stock] %>
         </div>
       </div>
 
@@ -625,10 +622,6 @@
               
               <div class="card-actions">
                 <%= link_to "✏️ Edit", edit_product_path(product), class: "btn btn-sm" %>
-                <button class="btn btn-sm btn-danger delete-btn" 
-                        data-product-id="<%= product.id %>"
-                        data-product-name="<%= product.name %>">
-                  🗑️ Delete
                 </button>
               </div>
             </div>
