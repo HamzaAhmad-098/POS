@@ -17,22 +17,20 @@ class Product < ApplicationRecord
 
   # Scopes for multi-tenancy
   scope :for_shop, ->(shop_id) { where(shop_id: shop_id) }
-
-  # Money handling methods
-  def selling_price
-    selling_price_cents.to_f / 100.0
-  end
-
-  def selling_price=(value)
-    self.selling_price_cents = (value.to_f * 100).round
-  end
-
   def purchase_price
-    purchase_price_cents.to_f / 100.0
+    purchase_price_cents
   end
 
   def purchase_price=(value)
-    self.purchase_price_cents = (value.to_f * 100).round
+    self.purchase_price_cents = value.to_i
+  end
+
+  def selling_price
+    selling_price_cents
+  end
+
+  def selling_price=(value)
+    self.selling_price_cents = value.to_i
   end
 
   # update stock and create movement

@@ -571,7 +571,7 @@
                 </td>
                 <td><%= product.barcode %></td>
                 <td><%= product.category&.name || "Uncategorized" %></td>
-                <td style="font-weight: 700;">Rs. <%= product.selling_price %></td>
+                <td style="font-weight: 700;">Rs. <%= product.selling_price_cents %></td>
                 <td>
                   <span class="stock <%= 'danger' if product.current_stock <= product.reorder_level %>">
                     <%= product.current_stock %> <%= product.unit %>
@@ -610,7 +610,7 @@
               <div class="product-details">
                 <div class="detail-item">
                   <div class="detail-label">PRICE</div>
-                  <div class="detail-value">Rs. <%= product.selling_price %></div>
+                  <div class="detail-value">Rs. <%= product.selling_price_cents %></div>
                 </div>
                 <div class="detail-item">
                   <div class="detail-label">STOCK</div>

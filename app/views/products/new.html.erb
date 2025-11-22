@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <%= csrf_meta_tags %>
   
-  <!-- Using Html5-Qrcode - Better for mobile barcode scanning -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   
   <style>
@@ -129,7 +128,7 @@
       background: white;
       box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
     }
-    .price-input-container {
+    .rupee-input-group {
       position: relative;
     }
     .rupee-symbol {
@@ -141,8 +140,8 @@
       color: #495057;
       z-index: 2;
     }
-    .price-input {
-      padding-left: 30px !important;
+    .rupee-input {
+      padding-left: 35px !important;
     }
     /* Scanner Section - CRITICAL FIXES */
     .scanner-section {
@@ -424,30 +423,30 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <%= form.label :purchase_price, "Cost Price (Rs) *" %>
-              <div class="price-input-container">
-                <span class="rupee-symbol"></span>
-                <%= form.number_field :purchase_price, 
-                      step: 0.01, 
+              <%= form.label :purchase_price_cents, "Cost Price (Rs) *" %>
+              <div class="rupee-input-group">
+                <span class="rupee-symbol">₹</span>
+                <%= form.number_field :purchase_price_cents, 
+                      step: 1,
                       min: 0,
                       required: true,
-                      class: "form-control price-input",
-                      placeholder: "0.00",
-                      inputmode: "decimal",
+                      class: "form-control rupee-input",
+                      placeholder: "0",
+                      inputmode: "numeric",
                       id: "purchase_price_input" %>
               </div>
             </div>
             <div class="form-group">
-              <%= form.label :selling_price, "Selling Price (Rs) *" %>
-              <div class="price-input-container">
-                <span class="rupee-symbol"></span>
-                <%= form.number_field :selling_price, 
-                      step: 0.01, 
+              <%= form.label :selling_price_cents, "Selling Price (Rs) *" %>
+              <div class="rupee-input-group">
+                <span class="rupee-symbol">₹</span>
+                <%= form.number_field :selling_price_cents, 
+                      step: 1,
                       min: 0,
                       required: true,
-                      class: "form-control price-input",
-                      placeholder: "0.00",
-                      inputmode: "decimal",
+                      class: "form-control rupee-input",
+                      placeholder: "0",
+                      inputmode: "numeric",
                       id: "selling_price_input" %>
               </div>
             </div>
@@ -472,9 +471,6 @@
             </div>
           </div>
         </div>
-        <!-- Hidden fields for cents conversion -->
-        <%= form.hidden_field :purchase_price_cents, id: "purchase_price_cents" %>
-        <%= form.hidden_field :selling_price_cents, id: "selling_price_cents" %>
         
         <!-- Form Actions -->
         <div class="form-actions">
@@ -509,7 +505,7 @@
     </div>
   </div>
 <script>
-// Enhanced ProductForm with Proper Rupees Handling and Navigation Fixes
+// Simplified ProductForm without rupee conversion
 class ProductForm {
   constructor() {
     this.scanner = null;
@@ -526,7 +522,6 @@ class ProductForm {
     
     this.setupBarcodeValidation();
     this.setupFormEnhancements();
-    this.setupPriceHandling();
     this.setupEventListeners();
     this.initialized = true;
   }
@@ -537,154 +532,11 @@ class ProductForm {
   }
 
   setupEventListeners() {
-    // Remove any existing listeners first
-    this.removeEventListeners();
-    
     // Form submission handling
     const form = document.getElementById('product-form');
     if (form) {
       form.addEventListener('submit', (e) => this.handleFormSubmit(e));
     }
-
-    // Price field listeners for real-time formatting
-    const purchasePriceInput = document.getElementById('purchase_price_input');
-    const sellingPriceInput = document.getElementById('selling_price_input');
-    
-    if (purchasePriceInput) {
-      purchasePriceInput.addEventListener('input', (e) => this.formatPriceInput(e.target));
-      purchasePriceInput.addEventListener('blur', (e) => this.finalizePriceFormat(e.target));
-    }
-    if (sellingPriceInput) {
-      sellingPriceInput.addEventListener('input', (e) => this.formatPriceInput(e.target));
-      sellingPriceInput.addEventListener('blur', (e) => this.finalizePriceFormat(e.target));
-    }
-  }
-
-  removeEventListeners() {
-    // Clean up any specific event listeners if needed
-    const form = document.getElementById('product-form');
-    if (form) {
-      form.removeEventListener('submit', this.handleFormSubmit);
-    }
-  }
-
-  setupPriceHandling() {
-    // Format existing price values on load
-    const purchasePriceInput = document.getElementById('purchase_price_input');
-    const sellingPriceInput = document.getElementById('selling_price_input');
-    
-    // If we have existing values in cents, convert to rupees for display
-    if (purchasePriceInput && purchasePriceInput.dataset.centsValue) {
-      const rupeesValue = (parseInt(purchasePriceInput.dataset.centsValue) / 100).toFixed(2);
-      purchasePriceInput.value = rupeesValue;
-    }
-    if (sellingPriceInput && sellingPriceInput.dataset.centsValue) {
-      const rupeesValue = (parseInt(sellingPriceInput.dataset.centsValue) / 100).toFixed(2);
-      sellingPriceInput.value = rupeesValue;
-    }
-    
-    // Format any existing values
-    if (purchasePriceInput && purchasePriceInput.value) {
-      this.finalizePriceFormat(purchasePriceInput);
-    }
-    if (sellingPriceInput && sellingPriceInput.value) {
-      this.finalizePriceFormat(sellingPriceInput);
-    }
-  }
-
-  formatPriceInput(input) {
-    // Allow only numbers and one decimal point
-    let value = input.value.replace(/[^\d.]/g, '');
-    
-    // Ensure only one decimal point
-    const decimalCount = (value.match(/\./g) || []).length;
-    if (decimalCount > 1) {
-      value = value.substring(0, value.lastIndexOf('.'));
-    }
-    
-    // Limit to 2 decimal places
-    if (value.includes('.')) {
-      const parts = value.split('.');
-      if (parts[1].length > 2) {
-        value = parts[0] + '.' + parts[1].substring(0, 2);
-      }
-    }
-    
-    input.value = value;
-  }
-
-  finalizePriceFormat(input) {
-    if (input.value && !isNaN(parseFloat(input.value))) {
-      // Format to exactly 2 decimal places
-      const formattedValue = parseFloat(input.value).toFixed(2);
-      if (formattedValue !== input.value) {
-        input.value = formattedValue;
-      }
-    } else if (input.value === '') {
-      input.value = '0.00';
-    }
-  }
-
-  convertToCents(rupeesValue) {
-    if (!rupeesValue || isNaN(parseFloat(rupeesValue))) return 0;
-    return Math.round(parseFloat(rupeesValue) * 100);
-  }
-
-  handleFormSubmit(e) {
-    const submitBtn = document.getElementById('submit_btn');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '⏳ Saving...';
-    }
-
-    // Convert rupees to cents before submission
-    const purchasePriceInput = document.getElementById('purchase_price_input');
-    const sellingPriceInput = document.getElementById('selling_price_input');
-    const purchasePriceCents = document.getElementById('purchase_price_cents');
-    const sellingPriceCents = document.getElementById('selling_price_cents');
-
-    if (purchasePriceInput && purchasePriceCents) {
-      purchasePriceCents.value = this.convertToCents(purchasePriceInput.value);
-    }
-    if (sellingPriceInput && sellingPriceCents) {
-      sellingPriceCents.value = this.convertToCents(sellingPriceInput.value);
-    }
-
-    // Validate prices before submission
-    if (sellingPriceInput && sellingPriceInput.value) {
-      const price = parseFloat(sellingPriceInput.value);
-      if (price <= 0) {
-        this.showToast('Please enter a valid selling price', 'error');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '💾 Save Product';
-        }
-        e.preventDefault();
-        return;
-      }
-    }
-
-    // Validate purchase price
-    if (purchasePriceInput && purchasePriceInput.value) {
-      const price = parseFloat(purchasePriceInput.value);
-      if (price < 0) {
-        this.showToast('Purchase price cannot be negative', 'error');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '💾 Save Product';
-        }
-        e.preventDefault();
-        return;
-      }
-    }
-
-    // Continue with form submission
-    setTimeout(() => {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '💾 Save Product';
-      }
-    }, 3000);
   }
 
   setupBarcodeValidation() {
@@ -709,6 +561,52 @@ class ProductForm {
         }
       });
     }
+  }
+
+  handleFormSubmit(e) {
+    const submitBtn = document.getElementById('submit_btn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Saving...';
+    }
+
+    // Validate prices before submission
+    const sellingPriceInput = document.getElementById('selling_price_input');
+    if (sellingPriceInput && sellingPriceInput.value) {
+      const price = parseInt(sellingPriceInput.value);
+      if (price <= 0) {
+        this.showToast('Please enter a valid selling price', 'error');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '💾 Save Product';
+        }
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // Validate purchase price
+    const purchasePriceInput = document.getElementById('purchase_price_input');
+    if (purchasePriceInput && purchasePriceInput.value) {
+      const price = parseInt(purchasePriceInput.value);
+      if (price < 0) {
+        this.showToast('Purchase price cannot be negative', 'error');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '💾 Save Product';
+        }
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // Continue with form submission
+    setTimeout(() => {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '💾 Save Product';
+      }
+    }, 3000);
   }
 
   validateBarcode(barcode) {
@@ -791,31 +689,21 @@ class ProductForm {
   }
 
   onScanSuccess(decodedText, decodedResult) {
-    // Prevent duplicate scans
     if (this.scanCooldown) return;
-
-    // Only accept EAN-8, UPC-A, EAN-13, EAN-14
     const cleanBarcode = decodedText.replace(/\D/g, '');
-
     const allowedLengths = [8,12,13,14];
     if (!allowedLengths.includes(cleanBarcode.length)) {
-      this.showToast('❌ Scanned code is not a valid product barcode (must be 8, 12, 13, or 14 digits)', 'error');
+      this.showToast('❌ Scanned code is not a valid product barcode', 'error');
       return;
     }
-
     if (cleanBarcode === this.lastScannedCode) return;
-
     this.lastScannedCode = cleanBarcode;
     this.scanCooldown = true;
-
-    // Update status
     const scannerStatus = document.getElementById('scannerStatus');
     scannerStatus.textContent = '✅ Barcode Scanned!';
     scannerStatus.style.color = '#28a745';
-
     document.getElementById('product_barcode').value = cleanBarcode;
     this.validateBarcode(cleanBarcode);
-
     this.playBeep();
     this.showToast('✓ Barcode scanned: ' + cleanBarcode, 'success');
     setTimeout(() => {
@@ -902,7 +790,7 @@ function showToast(message, type = 'info') {
   }, 3000);
 }
 
-// Global initialization with proper lifecycle management
+// Global initialization
 function initializeProductForm() {
   // Clean up existing instance
   if (window.productForm && typeof window.productForm.destroy === 'function') {
@@ -913,28 +801,10 @@ function initializeProductForm() {
   window.productForm = new ProductForm();
 }
 
-// Multiple event listeners for different scenarios
+// Event listeners
 document.addEventListener('DOMContentLoaded', initializeProductForm);
 document.addEventListener('turbo:load', initializeProductForm);
 document.addEventListener('turbolinks:load', initializeProductForm);
-
-// Handle page visibility and navigation
-document.addEventListener('visibilitychange', function() {
-  if (!document.hidden && window.location.pathname.includes('/products/new')) {
-    setTimeout(initializeProductForm, 50);
-  }
-});
-
-window.addEventListener('pageshow', function(event) {
-  if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-    setTimeout(initializeProductForm, 100);
-  }
-});
-
-// Initialize immediately if needed
-if (document.readyState !== 'loading') {
-  setTimeout(initializeProductForm, 0);
-}
 
 // Auto-focus barcode field on load
 document.addEventListener('DOMContentLoaded', function() {
