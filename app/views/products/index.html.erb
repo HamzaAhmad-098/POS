@@ -1,74 +1,747 @@
-# app/views/products/index.html.erb
-<div class="container">
-  <div class="header">
-    <h1>Products</h1>
-    <div class="actions">
-      <%= link_to "Add Product", new_product_path, class: "btn btn-primary" %>
-      <%= link_to "Bulk Import", bulk_import_products_path, class: "btn btn-secondary" %>
-      <%= link_to "Scan Barcode", scan_products_path, class: "btn btn-info" %>
-    </div>
-  </div>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Products - POS System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <%= csrf_meta_tags %>
+  <style>
+    * { 
+      margin: 0;
+      padding: 0; 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+      min-height: 100vh;
+      line-height: 1.6;
+      color: #2c3e50;
+    }
+    .mobile-container { 
+      min-height: 100vh; 
+      background: white; 
+    }
+    .mobile-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    }
+    .mobile-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 14px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 50px;
+      text-align: center;
+    }
+    .btn-sm { 
+      padding: 10px 14px; 
+      min-height: 40px; 
+      font-size: 14px; 
+    }
+    .btn-primary { 
+      background: #007bff; 
+      color: white; 
+      box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+    }
+    .btn-secondary { 
+      background: #6c757d; 
+      color: white; 
+      box-shadow: 0 4px 15px rgba(108,117,125,0.3);
+    }
+    .btn-info { 
+      background: #17a2b8; 
+      color: white; 
+      box-shadow: 0 4px 15px rgba(23,162,184,0.3);
+    }
+    .btn-success { 
+      background: #28a745; 
+      color: white; 
+      box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+    }
+    .btn-danger { 
+      background: #dc3545; 
+      color: white; 
+      box-shadow: 0 4px 15px rgba(220,53,69,0.3);
+    }
+    .btn-warning { 
+      background: #ffc107; 
+      color: #212529; 
+      box-shadow: 0 4px 15px rgba(255,193,7,0.3);
+    }
+    .btn-search {
+      background: #28a745;
+      color: white;
+      box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+    }
+    .main-content {
+      padding: 20px 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .search-section {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid #e9ecef;
+    }
+    .search-box {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 16px;
+      background: #f8f9fa;
+      transition: all 0.3s ease;
+    }
+    .search-box input:focus {
+      outline: none;
+      border-color: #007bff;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    }
+    .filters {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+    .filter-btn {
+      padding: 12px 20px;
+      border: 2px solid #e9ecef;
+      border-radius: 25px;
+      text-decoration: none;
+      color: #6c757d;
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+      background: white;
+    }
+    .filter-btn.active {
+      background: #007bff;
+      color: white;
+      border-color: #007bff;
+      box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+    }
+    .products-section {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid #e9ecef;
+      margin-bottom: 80px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f8f9fa;
+    }
+    .section-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+    }
+    .section-icon {
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    /* Desktop Table */
+    .desktop-table {
+      width: 100%;
+      border-collapse: collapse;
+      display: none;
+    }
+    .desktop-table th {
+      background: #f8f9fa;
+      padding: 16px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #2c3e50;
+      border-bottom: 2px solid #e9ecef;
+      font-size: 14px;
+    }
+    .desktop-table td {
+      padding: 16px 12px;
+      border-bottom: 1px solid #e9ecef;
+      vertical-align: middle;
+    }
+    .desktop-table tr:last-child td {
+      border-bottom: none;
+    }
+    .desktop-table tr.low-stock {
+      background: #fff5f5;
+      border-left: 4px solid #dc3545;
+    }
+    .product-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-right: 12px;
+      vertical-align: middle;
+    }
+    .stock {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+      background: #e7f4e4;
+      color: #28a745;
+    }
+    .stock.danger {
+      background: #ffe6e6;
+      color: #dc3545;
+    }
+    .table-actions {
+      display: flex;
+      gap: 8px;
+    }
+    /* Mobile Cards */
+    .mobile-cards {
+      display: grid;
+      gap: 16px;
+    }
+    .product-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid #e9ecef;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .product-card.low-stock {
+      border-left: 4px solid #dc3545;
+      background: #fff5f5;
+    }
+    .product-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .product-image {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6c757d;
+      font-size: 24px;
+    }
+    .product-info {
+      flex: 1;
+    }
+    .product-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .product-barcode {
+      font-size: 14px;
+      color: #6c757d;
+      margin-bottom: 4px;
+    }
+    .product-category {
+      font-size: 14px;
+      color: #17a2b8;
+      font-weight: 600;
+    }
+    .product-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 12px;
+    }
+    .detail-item {
+      text-align: center;
+    }
+    .detail-label {
+      font-size: 12px;
+      color: #6c757d;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .detail-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    .detail-value.stock-danger {
+      color: #dc3545;
+    }
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .card-actions .btn {
+      flex: 1;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6c757d;
+    }
+    .empty-state p {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .floating-action {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    .fab {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    .fab:active {
+      transform: scale(0.95);
+    }
+    .stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border: 1px solid #e9ecef;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #6c757d;
+      font-weight: 600;
+    }
+    .stat-card.total .stat-value { color: #007bff; }
+    .stat-card.low-stock .stat-value { color: #dc3545; }
 
-  <div class="search-section">
-    <%= form_with url: products_path, method: :get, local: true do |form| %>
-      <div class="search-box">
-        <%= form.text_field :search, placeholder: "Search by name or barcode...", value: params[:search] %>
-        <%= form.submit "Search", class: "btn btn-search" %>
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      padding: 0;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: modalSlideIn 0.3s ease-out;
+    }
+    @keyframes modalSlideIn {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid #e9ecef;
+      text-align: center;
+    }
+    .modal-header h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+    }
+    .modal-body {
+      padding: 24px;
+      text-align: center;
+    }
+    .modal-body p {
+      font-size: 16px;
+      color: #6c757d;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .modal-footer {
+      padding: 16px 24px 24px;
+      display: flex;
+      gap: 12px;
+    }
+    .modal-footer .btn {
+      flex: 1;
+    }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 15px 25px;
+      border-radius: 25px;
+      z-index: 10002;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      max-width: 90%;
+      text-align: center;
+      animation: slideDown 0.3s ease-out;
+    }
+    @keyframes slideDown {
+      from { transform: translate(-50%, -100px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+    .toast.success { background: #28a745; color: white; }
+    .toast.error { background: #dc3545; color: white; }
+    .toast.info { background: #17a2b8; color: white; }
+
+    /* Responsive */
+    @media (min-width: 768px) {
+      .mobile-header h1 { font-size: 28px; margin-bottom: 16px; }
+      .header-actions { justify-content: flex-start; }
+      .desktop-table { display: table; }
+      .mobile-cards { display: none; }
+      .stats-bar { grid-template-columns: 1fr 1fr 1fr; }
+      .stat-card { padding: 20px; }
+    }
+    @media (min-width: 1024px) {
+      .search-box { margin-bottom: 0; }
+      .filters { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-container">
+    <!-- Header -->
+    <div class="mobile-header">
+      <h1>📦 Product Inventory</h1>
+      <div class="header-actions">
+        <%= link_to "➕ Add Product", new_product_path, class: "btn btn-primary btn-sm" %>
+        <%= link_to "📤 Import", bulk_import_products_path, class: "btn btn-secondary btn-sm" %>
+        <%= link_to "📷 Scan", scan_products_path, class: "btn btn-info btn-sm" %>
       </div>
-    <% end %>
-    
-    <div class="filters">
-      <%= link_to "All Products", products_path, class: "filter-btn #{'active' unless params[:low_stock]}" %>
-      <%= link_to "Low Stock", products_path(low_stock: true), class: "filter-btn #{'active' if params[:low_stock]}" %>
     </div>
-  </div>
 
-  <div class="products-table">
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Barcode</th>
-          <th>Category</th>
-          <th>Price</th>
-          <th>Stock</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @products.each do |product| %>
-          <tr class="<%= 'low-stock' if product.current_stock <= product.reorder_level %>">
-            <td>
-              <% if product.photo.attached? %>
-                <%= image_tag product.photo, class: "product-thumb" %>
-              <% end %>
-              <%= product.name %>
-            </td>
-            <td><%= product.barcode %></td>
-            <td><%= product.category&.name %></td>
-            <td>Rs. <%= product.selling_price %></td>
-            <td>
-              <span class="stock <%= 'danger' if product.current_stock <= product.reorder_level %>">
-                <%= product.current_stock %>
-              </span>
-            </td>
-            <td class="actions">
-              <%= link_to "Edit", edit_product_path(product), class: "btn btn-sm" %>
-              <%= link_to "Delete", product_path(product), 
-                          method: :delete, 
-                          data: { confirm: "Are you sure?" }, 
-                          class: "btn btn-sm btn-danger" %>
-            </td>
-          </tr>
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Quick Stats -->
+      <div class="stats-bar">
+        <div class="stat-card total">
+          <div class="stat-value"><%= @products.count %></div>
+          <div class="stat-label">TOTAL PRODUCTS</div>
+        </div>
+        <div class="stat-card low-stock">
+          <div class="stat-value">
+            <%= @products.count { |p| p.current_stock <= p.reorder_level } %>
+          </div>
+          <div class="stat-label">LOW STOCK</div>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="search-section">
+        <%= form_with url: products_path, method: :get, local: true do |form| %>
+          <div class="search-box">
+            <%= form.text_field :search, 
+                  placeholder: "🔍 Search products...", 
+                  value: params[:search],
+                  class: "search-input" %>
+            <%= form.submit "Search", class: "btn btn-search" %>
+          </div>
         <% end %>
-      </tbody>
-    </table>
-    
-    <% if @products.empty? %>
-      <div class="empty-state">
-        <p>No products found.</p>
-        <%= link_to "Add Your First Product", new_product_path, class: "btn btn-primary" %>
+        
+        <div class="filters">
+          <%= link_to "All Products", products_path, 
+                class: "filter-btn #{'active' unless params[:low_stock]}" %>
+          <%= link_to "Low Stock", products_path(low_stock: true), 
+                class: "filter-btn #{'active' if params[:low_stock]}" %>
+          <%= link_to "Clear Filters", products_path, 
+                class: "filter-btn" if params[:search] || params[:low_stock] %>
+        </div>
       </div>
-    <% end %>
+
+      <!-- Products Section -->
+      <div class="products-section">
+        <div class="section-header">
+          <div class="section-icon">📦</div>
+          <h2>Product List</h2>
+        </div>
+
+        <!-- Desktop Table -->
+        <table class="desktop-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Barcode</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @products.each do |product| %>
+              <tr class="<%= 'low-stock' if product.current_stock <= product.reorder_level %>">
+                <td>
+                  <div style="display: flex; align-items: center;">
+                    <% if product.photo.attached? %>
+                      <%= image_tag product.photo, class: "product-thumb" %>
+                    <% else %>
+                      <div class="product-image">📦</div>
+                    <% end %>
+                    <div>
+                      <div style="font-weight: 600;"><%= product.name %></div>
+                      <% if product.brand.present? %>
+                        <div style="font-size: 12px; color: #6c757d;"><%= product.brand %></div>
+                      <% end %>
+                    </div>
+                  </div>
+                </td>
+                <td><%= product.barcode %></td>
+                <td><%= product.category&.name || "Uncategorized" %></td>
+                <td style="font-weight: 700;">Rs. <%= product.selling_price %></td>
+                <td>
+                  <span class="stock <%= 'danger' if product.current_stock <= product.reorder_level %>">
+                    <%= product.current_stock %> <%= product.unit %>
+                  </span>
+                </td>
+                <td>
+                  <div class="table-actions">
+                    <%= link_to "✏️", edit_product_path(product), 
+                          class: "btn btn-sm", 
+                          title: "Edit" %>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+
+        <!-- Mobile Cards -->
+        <div class="mobile-cards">
+          <% @products.each do |product| %>
+            <div class="product-card <%= 'low-stock' if product.current_stock <= product.reorder_level %>">
+              <div class="product-card-header">
+                <% if product.photo.attached? %>
+                  <%= image_tag product.photo, class: "product-image" %>
+                <% else %>
+                  <div class="product-image">📦</div>
+                <% end %>
+                <div class="product-info">
+                  <div class="product-name"><%= product.name %></div>
+                  <div class="product-barcode"><%= product.barcode %></div>
+                  <div class="product-category"><%= product.category&.name || "Uncategorized" %></div>
+                </div>
+              </div>
+              
+              <div class="product-details">
+                <div class="detail-item">
+                  <div class="detail-label">PRICE</div>
+                  <div class="detail-value">Rs. <%= product.selling_price %></div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">STOCK</div>
+                  <div class="detail-value <%= 'stock-danger' if product.current_stock <= product.reorder_level %>">
+                    <%= product.current_stock %> <%= product.unit %>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card-actions">
+                <%= link_to "✏️ Edit", edit_product_path(product), class: "btn btn-sm" %>
+                <button class="btn btn-sm btn-danger delete-btn" 
+                        data-product-id="<%= product.id %>"
+                        data-product-name="<%= product.name %>">
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Empty State -->
+        <% if @products.empty? %>
+          <div class="empty-state">
+            <p>📭 No products found</p>
+            <% if params[:search] || params[:low_stock] %>
+              <p style="font-size: 14px; margin-bottom: 20px;">
+                Try adjusting your search or filters
+              </p>
+            <% end %>
+            <%= link_to "➕ Add Your First Product", new_product_path, class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action">
+      <button class="fab" onclick="window.location.href='<%= new_product_path %>'">
+        ➕
+      </button>
+    </div>
   </div>
-</div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🗑️ Delete Product</h3>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong id="productName"></strong>?</p>
+        <p style="font-size: 14px; color: #dc3545;">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <a href="#" class="btn btn-danger" id="confirmDeleteLink" data-turbo-method="delete" data-method="delete">Delete</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple delete functionality using Rails' method: :delete
+    function showDeleteModal(productId, productName) {
+      document.getElementById('productName').textContent = productName;
+      
+      // Set the delete link with the correct URL
+      const deleteLink = document.getElementById('confirmDeleteLink');
+      deleteLink.href = `/products/${productId}`;
+      
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    // Setup event listeners for delete buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      // Handle delete button clicks
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('delete-btn') || e.target.closest('.delete-btn')) {
+          e.preventDefault();
+          const btn = e.target.classList.contains('delete-btn') ? e.target : e.target.closest('.delete-btn');
+          const productId = btn.getAttribute('data-product-id');
+          const productName = btn.getAttribute('data-product-name');
+          
+          if (productId && productId !== 'null') {
+            showDeleteModal(productId, productName);
+          }
+        }
+      });
+
+      // Close modal when clicking backdrop
+      document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeDeleteModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeDeleteModal();
+        }
+      });
+    });
+
+    // Simple toast notification
+    function showToast(message, type = 'info') {
+      const existingToasts = document.querySelectorAll('.toast');
+      existingToasts.forEach(toast => toast.remove());
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translate(-50%, -100px)';
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.remove();
+          }
+        }, 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

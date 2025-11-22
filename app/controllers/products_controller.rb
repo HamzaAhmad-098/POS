@@ -81,10 +81,14 @@ class ProductsController < ApplicationController
       render :edit
     end
   end
-
   def destroy
+    @product = Product.find(params[:id])
     @product.destroy
-    redirect_to products_path, notice: "Product deleted successfully!"
+    
+    respond_to do |format|
+      format.html { redirect_to products_url, notice: 'Product was successfully deleted.' }
+      format.json { head :no_content }
+    end
   end
 
   def scan
@@ -220,7 +224,11 @@ class ProductsController < ApplicationController
   def set_categories
     @categories = Current.shop.categories
   end
-
+  def remove_photo
+    @product = Product.find(params[:id])
+    @product.photo.purge
+    redirect_to edit_product_path(@product), notice: 'Photo removed successfully'
+  end
   def product_params
     params.require(:product).permit(
       :name, :sku, :barcode, :category_id, :purchase_price_cents,

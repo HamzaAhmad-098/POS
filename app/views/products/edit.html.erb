@@ -1,15 +1,15 @@
+# app/views/products/edit.html.erb
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Add New Product - POS System</title>
+  <title>Edit Product - POS System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <%= csrf_meta_tags %>
   
-  <!-- Using Html5-Qrcode - Better for mobile barcode scanning -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   
   <style>
-    /* [Keep all your existing styles - they're great!] */
+    /* Reuse the same styles from new.html.erb with some enhancements */
     * { 
       margin: 0;
       padding: 0; 
@@ -130,7 +130,91 @@
       background: white;
       box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
     }
-    /* Scanner Section - CRITICAL FIXES */
+    .barcode-section {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .barcode-input-group {
+      display: flex;
+      gap: 12px;
+    }
+    .barcode-input-group .form-control {
+      flex: 1;
+      background: rgba(255,255,255,0.95);
+      border: none;
+      color: #2c3e50;
+    }
+    .barcode-validation {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .form-actions {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 20px 16px;
+      border-top: 1px solid #e9ecef;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+      margin: 0 -16px -20px;
+    }
+    .action-buttons { 
+      display: flex; 
+      gap: 12px; 
+    }
+    .action-buttons .btn { flex: 1; }
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .action-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      border: 2px solid #e9ecef;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .action-card:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .action-icon { font-size: 32px; margin-bottom: 10px;}
+    .action-text { font-weight: 600; color: #2c3e50; font-size: 14px;}
+    
+    /* Edit-specific styles */
+    .current-photo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .current-photo img {
+      width: 120px;
+      height: 120px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 3px solid #e9ecef;
+    }
+    .photo-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    
+    /* Scanner styles (reused from new.html.erb) */
     .scanner-section {
       display: none;
       position: fixed;
@@ -161,9 +245,6 @@
       width: 100% !important;
       height: 100% !important;
       object-fit: cover !important;
-    }
-    #qr-reader__dashboard_section {
-      display: none !important;
     }
     .scanner-frame-overlay {
       position: absolute;
@@ -226,79 +307,7 @@
       z-index: 10001;
     }
     .scanner-controls .btn { flex: 1; }
-    .barcode-section {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      color: white;
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .barcode-input-group {
-      display: flex;
-      gap: 12px;
-    }
-    .barcode-input-group .form-control {
-      flex: 1;
-      background: rgba(255,255,255,0.95);
-      border: none;
-      color: #2c3e50;
-    }
-    .barcode-validation {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    .form-actions {
-      position: sticky;
-      bottom: 0;
-      background: white;
-      padding: 20px 16px;
-      border-top: 1px solid #e9ecef;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-      margin: 0 -16px -20px;
-    }
-    .action-buttons { display: flex; gap: 12px; }
-    .action-buttons .btn { flex: 1; }
-    .quick-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .action-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      border: 2px solid #e9ecef;
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-    .action-card:active {
-      transform: translateY(1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .action-icon { font-size: 32px; margin-bottom: 10px;}
-    .action-text { font-weight: 600; color: #2c3e50; font-size: 14px;}
-    .spinner {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #007bff;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg);}
-      100% { transform: rotate(360deg);}
-    }
+    
     .toast {
       position: fixed;
       top: 20px;
@@ -320,6 +329,7 @@
     .toast.success { background: #28a745; color: white;}
     .toast.error { background: #dc3545; color: white;}
     .toast.info { background: #17a2b8; color: white;}
+    
     @media (max-width: 768px) {
       .form-row {
         grid-template-columns: 1fr;
@@ -331,11 +341,12 @@
   <div class="mobile-container">
     <!-- Header -->
     <div class="mobile-header">
-      <h1>➕ Add New Product</h1>
+      <h1>✏️ Edit Product</h1>
       <div class="header-actions">
-        <a href="/products" class="btn btn-sm btn-primary">← Products</a>
+        <%= link_to "← Products", products_path, class: "btn btn-sm btn-primary" %>
       </div>
     </div>
+
     <!-- Main Content -->
     <div class="main-content">
       <!-- Quick Actions -->
@@ -344,12 +355,34 @@
           <div class="action-icon">📷</div>
           <div class="action-text">Scan Barcode</div>
         </div>
-        <div class="action-card" onclick="clearForm()">
-          <div class="action-icon">🗑️</div>
-          <div class="action-text">Clear Form</div>
+        <div class="action-card" onclick="resetForm()">
+          <div class="action-icon">🔄</div>
+          <div class="action-text">Reset Changes</div>
         </div>
       </div>
+
       <%= form_with model: @product, local: true, html: { class: "product-form", id: "product-form" } do |form| %>
+        <!-- Current Photo -->
+        <% if @product.photo.attached? %>
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">🖼️</div>
+              <h3>Current Photo</h3>
+            </div>
+            <div class="current-photo">
+              <%= image_tag @product.photo %>
+              <div class="photo-actions">
+                <%= form.label :photo, "📸 Change", class: "btn btn-sm btn-info" %>
+                <%= form.file_field :photo, style: "display: none", onchange: "previewPhoto(this)" %>
+                <%= link_to "🗑️ Remove", remove_photo_product_path(@product), 
+                      method: :delete, 
+                      data: { confirm: "Remove photo?" }, 
+                      class: "btn btn-sm btn-danger" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
         <!-- Barcode Section -->
         <div class="barcode-section">
           <div class="form-group mb-0">
@@ -372,6 +405,7 @@
             </div>
           </div>
         </div>
+
         <!-- Product Details -->
         <div class="form-section">
           <div class="section-header">
@@ -401,7 +435,15 @@
                     class: "form-control" %>
             </div>
           </div>
+          
+          <% unless @product.photo.attached? %>
+            <div class="form-group">
+              <%= form.label :photo, "Product Photo" %>
+              <%= form.file_field :photo, class: "form-control", accept: "image/*" %>
+            </div>
+          <% end %>
         </div>
+
         <!-- Pricing & Stock -->
         <div class="form-section">
           <div class="section-header">
@@ -434,7 +476,6 @@
                     step: 1, 
                     required: true,
                     class: "form-control",
-                    value: @product.current_stock || 0,
                     inputmode: "numeric" %>
             </div>
             <div class="form-group">
@@ -445,16 +486,26 @@
                     class: "form-control" %>
             </div>
           </div>
+          <div class="form-group">
+            <%= form.label :reorder_level, "Low Stock Alert" %>
+            <%= form.number_field :reorder_level, 
+                  step: 1,
+                  class: "form-control",
+                  placeholder: "Set reorder level",
+                  inputmode: "numeric" %>
+          </div>
         </div>
+
         <!-- Form Actions -->
         <div class="form-actions">
           <div class="action-buttons">
-            <%= form.submit "💾 Save & New Sale", class: "btn btn-success btn-full", name: "save_and_scan", data: { turbo: false } %>
+            <%= form.submit "💾 Update Product", class: "btn btn-success btn-full" %>
           </div>
         </div>
       <% end %>
     </div>
   </div>
+
   <!-- Barcode Scanner Modal -->
   <div id="scannerSection" class="scanner-section">
     <div class="scanner-header">
@@ -478,225 +529,225 @@
       <button class="btn btn-warning" onclick="productForm.switchCamera()">🔄 Flip</button>
     </div>
   </div>
-<script>
-// Production-Ready Barcode Scanner
-class ProductForm {
-  constructor() {
-    this.scanner = null;
-    this.isBackCamera = true;
-    this.isScanning = false;
-    this.lastScannedCode = null;
-    this.scanCooldown = false;
-    this.init();
-  }
-  init() {
-    this.setupBarcodeValidation();
-    this.setupFormEnhancements();
-  }
-  setupBarcodeValidation() {
-    const barcodeField = document.getElementById('product_barcode');
-    if (barcodeField) {
-      barcodeField.addEventListener('input', (e) => {
-        this.validateBarcode(e.target.value);
-      });
-      if (barcodeField.value) {
-        this.validateBarcode(barcodeField.value);
+
+  <script>
+    // Reuse the ProductForm class from new.html.erb with minor adjustments
+    class ProductForm {
+      constructor() {
+        this.scanner = null;
+        this.isBackCamera = true;
+        this.isScanning = false;
+        this.lastScannedCode = null;
+        this.scanCooldown = false;
+        this.init();
       }
-    }
-  }
-  setupFormEnhancements() {
-    const barcodeField = document.getElementById('product_barcode');
-    const nameField = document.getElementById('product_name');
-    if (barcodeField && nameField) {
-      barcodeField.addEventListener('change', () => {
-        if (barcodeField.value.length >= 8 && !nameField.value) {
-          setTimeout(() => nameField.focus(), 100);
+
+      init() {
+        this.setupBarcodeValidation();
+        this.setupFormEnhancements();
+      }
+
+      setupBarcodeValidation() {
+        const barcodeField = document.getElementById('product_barcode');
+        if (barcodeField) {
+          barcodeField.addEventListener('input', (e) => {
+            this.validateBarcode(e.target.value);
+          });
+          if (barcodeField.value) {
+            this.validateBarcode(barcodeField.value);
+          }
         }
-      });
-    }
-  }
-  validateBarcode(barcode) {
-    const statusIcon = document.getElementById('barcodeStatusIcon');
-    const statusText = document.getElementById('barcodeStatusText');
-    if (!barcode) {
-      statusIcon.textContent = '🔍';
-      statusText.textContent = 'Scan or enter barcode';
-      return false;
-    }
-    const isValid = /^\d{8,20}$/.test(barcode);
-    if (isValid) {
-      statusIcon.textContent = '✅';
-      statusText.textContent = 'Valid barcode';
-      return true;
-    } else {
-      statusIcon.textContent = '❌';
-      statusText.textContent = 'Enter 8-20 digits';
-      return false;
-    }
-  }
-  async openScanner() {
-    if (this.isScanning) return;
-    const scannerSection = document.getElementById('scannerSection');
-    const scannerStatus = document.getElementById('scannerStatus');
-    scannerSection.style.display = 'flex';
-    scannerStatus.textContent = 'Starting camera...';
-    this.isScanning = true;
-    try {
-      this.scanner = new Html5Qrcode("qr-reader");
-      const devices = await Html5Qrcode.getCameras();
-      if (!devices || devices.length === 0) {
-        throw new Error('No cameras found');
       }
-      const cameraId = this.isBackCamera && devices.length > 1 ? devices[devices.length - 1].id : devices[0].id;
-      const config = {
-        fps: 30,
-        qrbox: { width: 250, height: 150 },
-        aspectRatio: 1.7,
-        disableFlip: false,
-        videoConstraints: {
-          facingMode: this.isBackCamera ? "environment" : "user",
-          advanced: [{ focusMode: "continuous" }]
+
+      setupFormEnhancements() {
+        const barcodeField = document.getElementById('product_barcode');
+        const nameField = document.getElementById('product_name');
+        if (barcodeField && nameField) {
+          barcodeField.addEventListener('change', () => {
+            if (barcodeField.value.length >= 8 && !nameField.value) {
+              setTimeout(() => nameField.focus(), 100);
+            }
+          });
         }
-      };
-      await this.scanner.start(
-        cameraId,
-        config,
-        (decodedText, decodedResult) => {
-          this.onScanSuccess(decodedText, decodedResult);
-        },
-        (errorMessage) => {}
-      );
-      scannerStatus.textContent = '✓ Camera ready - Point at barcode';
-      scannerStatus.style.color = '#28a745';
-    } catch (error) {
-      this.handleScannerError(error);
-    }
-  }
-  handleScannerError(error) {
-    const scannerStatus = document.getElementById('scannerStatus');
-    let message = 'Camera error. ';
-    if (error.message.includes('NotAllowedError') || error.message.includes('Permission denied')) {
-      message = '❌ Camera permission denied. Please allow camera access and try again.';
-    } else if (error.message.includes('NotFoundError') || error.message.includes('No cameras found')) {
-      message = '❌ No camera found on this device.';
-    } else if (error.message.includes('NotReadableError')) {
-      message = '❌ Camera is being used by another app.';
-    } else if (error.message.includes('InsecureContextError') || error.message.includes('secure')) {
-      message = '❌ Camera requires HTTPS connection.';
-    } else {
-      message = '❌ ' + error.message;
-    }
-    scannerStatus.textContent = message;
-    scannerStatus.style.color = '#dc3545';
-    this.showToast(message, 'error');
-    setTimeout(() => { this.closeScanner(); }, 3000);
-  }
-  onScanSuccess(decodedText, decodedResult) {
-    // Prevent duplicate scans
-    if (this.scanCooldown) return;
-
-    // Only accept EAN-8, UPC-A, EAN-13, EAN-14
-    const cleanBarcode = decodedText.replace(/\D/g, '');
-
-    const allowedLengths = [8,12,13,14];
-    if (!allowedLengths.includes(cleanBarcode.length)) {
-      this.showToast('❌ Scanned code is not a valid product barcode (must be 8, 12, 13, or 14 digits)', 'error');
-      return;
-    }
-
-    if (cleanBarcode === this.lastScannedCode) return;
-
-    this.lastScannedCode = cleanBarcode;
-    this.scanCooldown = true;
-
-    // Update status
-    const scannerStatus = document.getElementById('scannerStatus');
-    scannerStatus.textContent = '✅ Barcode Scanned!';
-    scannerStatus.style.color = '#28a745';
-
-    document.getElementById('product_barcode').value = cleanBarcode;
-    this.validateBarcode(cleanBarcode);
-
-    this.playBeep();
-    this.showToast('✓ Barcode scanned: ' + cleanBarcode, 'success');
-    setTimeout(() => {
-      this.closeScanner();
-      const nameField = document.getElementById('product_name');
-      if (nameField) { nameField.focus(); }
-    }, 1000);
-  }
-  async switchCamera() {
-    if (!this.isScanning) return;
-    this.isBackCamera = !this.isBackCamera;
-    await this.closeScanner();
-    setTimeout(() => { this.openScanner(); }, 300);
-  }
-  async closeScanner() {
-    if (this.scanner) {
-      try { await this.scanner.stop(); this.scanner.clear(); } catch (error) {}
-      this.scanner = null;
-    }
-    const scannerSection = document.getElementById('scannerSection');
-    scannerSection.style.display = 'none';
-    this.isScanning = false;
-    this.scanCooldown = false;
-    this.lastScannedCode = null;
-  }
-  playBeep() {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = 800;
-      oscillator.type = 'sine';
-      gainNode.gain.value = 0.1;
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.1);
-    } catch (error) {}
-  }
-  showToast(message, type = 'info') {
-    const existingToasts = document.querySelectorAll('.toast');
-    existingToasts.forEach(toast => toast.remove());
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      if (toast.parentNode) {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translate(-50%, -100px)';
-        setTimeout(() => toast.remove(), 300);
       }
-    }, 3000);
-  }
-}
-function clearForm() {
-  if (confirm('Clear all fields?')) {
-    document.getElementById('product-form').reset();
-    productForm.validateBarcode('');
-    productForm.showToast('Form cleared', 'info');
-  }
-}
-let productForm;
-document.addEventListener('DOMContentLoaded', function() {
-  productForm = new ProductForm();
-  const barcodeField = document.getElementById('product_barcode');
-  if (barcodeField && !barcodeField.value) {
-    setTimeout(() => barcodeField.focus(), 500);
-  }
-});
-document.addEventListener('visibilitychange', function() {
-  if (document.hidden && productForm && productForm.isScanning) {
-    productForm.closeScanner();
-  }
-});
-window.addEventListener('beforeunload', function(e) {
-  if (productForm && productForm.isScanning) {
-    productForm.closeScanner();
-  }
-});
-</script>
+
+      validateBarcode(barcode) {
+        const statusIcon = document.getElementById('barcodeStatusIcon');
+        const statusText = document.getElementById('barcodeStatusText');
+        if (!barcode) {
+          statusIcon.textContent = '🔍';
+          statusText.textContent = 'Scan or enter barcode';
+          return false;
+        }
+        const isValid = /^\d{8,20}$/.test(barcode);
+        if (isValid) {
+          statusIcon.textContent = '✅';
+          statusText.textContent = 'Valid barcode';
+          return true;
+        } else {
+          statusIcon.textContent = '❌';
+          statusText.textContent = 'Enter 8-20 digits';
+          return false;
+        }
+      }
+
+      async openScanner() {
+        if (this.isScanning) return;
+        const scannerSection = document.getElementById('scannerSection');
+        const scannerStatus = document.getElementById('scannerStatus');
+        scannerSection.style.display = 'flex';
+        scannerStatus.textContent = 'Starting camera...';
+        this.isScanning = true;
+        try {
+          this.scanner = new Html5Qrcode("qr-reader");
+          const devices = await Html5Qrcode.getCameras();
+          if (!devices || devices.length === 0) {
+            throw new Error('No cameras found');
+          }
+          const cameraId = this.isBackCamera && devices.length > 1 ? devices[devices.length - 1].id : devices[0].id;
+          const config = {
+            fps: 30,
+            qrbox: { width: 250, height: 150 },
+            aspectRatio: 1.7,
+            disableFlip: false,
+            videoConstraints: {
+              facingMode: this.isBackCamera ? "environment" : "user",
+              advanced: [{ focusMode: "continuous" }]
+            }
+          };
+          await this.scanner.start(
+            cameraId,
+            config,
+            (decodedText, decodedResult) => {
+              this.onScanSuccess(decodedText, decodedResult);
+            },
+            (errorMessage) => {}
+          );
+          scannerStatus.textContent = '✓ Camera ready - Point at barcode';
+          scannerStatus.style.color = '#28a745';
+        } catch (error) {
+          this.handleScannerError(error);
+        }
+      }
+
+      handleScannerError(error) {
+        const scannerStatus = document.getElementById('scannerStatus');
+        let message = 'Camera error. ';
+        if (error.message.includes('NotAllowedError') || error.message.includes('Permission denied')) {
+          message = '❌ Camera permission denied. Please allow camera access and try again.';
+        } else if (error.message.includes('NotFoundError') || error.message.includes('No cameras found')) {
+          message = '❌ No camera found on this device.';
+        } else if (error.message.includes('NotReadableError')) {
+          message = '❌ Camera is being used by another app.';
+        } else if (error.message.includes('InsecureContextError') || error.message.includes('secure')) {
+          message = '❌ Camera requires HTTPS connection.';
+        } else {
+          message = '❌ ' + error.message;
+        }
+        scannerStatus.textContent = message;
+        scannerStatus.style.color = '#dc3545';
+        this.showToast(message, 'error');
+        setTimeout(() => { this.closeScanner(); }, 3000);
+      }
+
+      onScanSuccess(decodedText, decodedResult) {
+        if (this.scanCooldown) return;
+        const cleanBarcode = decodedText.replace(/\D/g, '');
+        const allowedLengths = [8,12,13,14];
+        if (!allowedLengths.includes(cleanBarcode.length)) {
+          this.showToast('❌ Scanned code is not a valid product barcode', 'error');
+          return;
+        }
+        if (cleanBarcode === this.lastScannedCode) return;
+        this.lastScannedCode = cleanBarcode;
+        this.scanCooldown = true;
+        const scannerStatus = document.getElementById('scannerStatus');
+        scannerStatus.textContent = '✅ Barcode Scanned!';
+        scannerStatus.style.color = '#28a745';
+        document.getElementById('product_barcode').value = cleanBarcode;
+        this.validateBarcode(cleanBarcode);
+        this.playBeep();
+        this.showToast('✓ Barcode scanned: ' + cleanBarcode, 'success');
+        setTimeout(() => {
+          this.closeScanner();
+          const nameField = document.getElementById('product_name');
+          if (nameField) { nameField.focus(); }
+        }, 1000);
+      }
+
+      async switchCamera() {
+        if (!this.isScanning) return;
+        this.isBackCamera = !this.isBackCamera;
+        await this.closeScanner();
+        setTimeout(() => { this.openScanner(); }, 300);
+      }
+
+      async closeScanner() {
+        if (this.scanner) {
+          try { await this.scanner.stop(); this.scanner.clear(); } catch (error) {}
+          this.scanner = null;
+        }
+        const scannerSection = document.getElementById('scannerSection');
+        scannerSection.style.display = 'none';
+        this.isScanning = false;
+        this.scanCooldown = false;
+        this.lastScannedCode = null;
+      }
+
+      playBeep() {
+        try {
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.frequency.value = 800;
+          oscillator.type = 'sine';
+          gainNode.gain.value = 0.1;
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.1);
+        } catch (error) {}
+      }
+
+      showToast(message, type = 'info') {
+        const existingToasts = document.querySelectorAll('.toast');
+        existingToasts.forEach(toast => toast.remove());
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translate(-50%, -100px)';
+            setTimeout(() => toast.remove(), 300);
+          }
+        }, 3000);
+      }
+    }
+
+    function resetForm() {
+      if (confirm('Reset all changes?')) {
+        document.getElementById('product-form').reset();
+        productForm.validateBarcode(document.getElementById('product_barcode').value);
+        productForm.showToast('Changes reset', 'info');
+      }
+    }
+
+    function previewPhoto(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          productForm.showToast('Photo selected', 'success');
+        }
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    let productForm;
+    document.addEventListener('DOMContentLoaded', function() {
+      productForm = new ProductForm();
+    });
+  </script>
 </body>
 </html>
