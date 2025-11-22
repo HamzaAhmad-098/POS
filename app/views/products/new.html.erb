@@ -9,7 +9,6 @@
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   
   <style>
-    /* [Keep all your existing styles - they're great!] */
     * { 
       margin: 0;
       padding: 0; 
@@ -129,6 +128,21 @@
       border-color: #007bff;
       background: white;
       box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    }
+    .price-input-container {
+      position: relative;
+    }
+    .rupee-symbol {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: bold;
+      color: #495057;
+      z-index: 2;
+    }
+    .price-input {
+      padding-left: 30px !important;
     }
     /* Scanner Section - CRITICAL FIXES */
     .scanner-section {
@@ -333,7 +347,7 @@
     <div class="mobile-header">
       <h1>➕ Add New Product</h1>
       <div class="header-actions">
-        <a href="/products" class="btn btn-sm btn-primary">← Products</a>
+        <a href="/products" class="btn btn-sm btn-primary" data-turbo="false">← Products</a>
       </div>
     </div>
     <!-- Main Content -->
@@ -410,21 +424,32 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <%= form.label :purchase_price_cents, "Cost (Rs)" %>
-              <%= form.number_field :purchase_price_cents, 
-                    step: 0.01, 
-                    class: "form-control",
-                    placeholder: "0.00",
-                    inputmode: "decimal" %>
+              <%= form.label :purchase_price, "Cost Price (Rs) *" %>
+              <div class="price-input-container">
+                <span class="rupee-symbol"></span>
+                <%= form.number_field :purchase_price, 
+                      step: 0.01, 
+                      min: 0,
+                      required: true,
+                      class: "form-control price-input",
+                      placeholder: "0.00",
+                      inputmode: "decimal",
+                      id: "purchase_price_input" %>
+              </div>
             </div>
             <div class="form-group">
-              <%= form.label :selling_price_cents, "Price (Rs) *" %>
-              <%= form.number_field :selling_price_cents, 
-                    step: 0.01, 
-                    required: true,
-                    class: "form-control",
-                    placeholder: "0.00",
-                    inputmode: "decimal" %>
+              <%= form.label :selling_price, "Selling Price (Rs) *" %>
+              <div class="price-input-container">
+                <span class="rupee-symbol"></span>
+                <%= form.number_field :selling_price, 
+                      step: 0.01, 
+                      min: 0,
+                      required: true,
+                      class: "form-control price-input",
+                      placeholder: "0.00",
+                      inputmode: "decimal",
+                      id: "selling_price_input" %>
+              </div>
             </div>
           </div>
           <div class="form-row">
@@ -432,6 +457,7 @@
               <%= form.label :current_stock, "Stock *" %>
               <%= form.number_field :current_stock, 
                     step: 1, 
+                    min: 0,
                     required: true,
                     class: "form-control",
                     value: @product.current_stock || 0,
@@ -446,10 +472,14 @@
             </div>
           </div>
         </div>
+        <!-- Hidden fields for cents conversion -->
+        <%= form.hidden_field :purchase_price_cents, id: "purchase_price_cents" %>
+        <%= form.hidden_field :selling_price_cents, id: "selling_price_cents" %>
+        
         <!-- Form Actions -->
         <div class="form-actions">
           <div class="action-buttons">
-            <%= form.submit "💾 Save & New Sale", class: "btn btn-success btn-full", name: "save_and_scan", data: { turbo: false } %>
+            <%= form.submit "💾 Save Product", class: "btn btn-success btn-full", id: "submit_btn", data: { turbo: false } %>
           </div>
         </div>
       <% end %>
@@ -479,7 +509,7 @@
     </div>
   </div>
 <script>
-// Production-Ready Barcode Scanner
+// Enhanced ProductForm with Proper Rupees Handling and Navigation Fixes
 class ProductForm {
   constructor() {
     this.scanner = null;
@@ -487,12 +517,176 @@ class ProductForm {
     this.isScanning = false;
     this.lastScannedCode = null;
     this.scanCooldown = false;
+    this.initialized = false;
     this.init();
   }
+
   init() {
+    if (this.initialized) return;
+    
     this.setupBarcodeValidation();
     this.setupFormEnhancements();
+    this.setupPriceHandling();
+    this.setupEventListeners();
+    this.initialized = true;
   }
+
+  destroy() {
+    this.closeScanner();
+    this.initialized = false;
+  }
+
+  setupEventListeners() {
+    // Remove any existing listeners first
+    this.removeEventListeners();
+    
+    // Form submission handling
+    const form = document.getElementById('product-form');
+    if (form) {
+      form.addEventListener('submit', (e) => this.handleFormSubmit(e));
+    }
+
+    // Price field listeners for real-time formatting
+    const purchasePriceInput = document.getElementById('purchase_price_input');
+    const sellingPriceInput = document.getElementById('selling_price_input');
+    
+    if (purchasePriceInput) {
+      purchasePriceInput.addEventListener('input', (e) => this.formatPriceInput(e.target));
+      purchasePriceInput.addEventListener('blur', (e) => this.finalizePriceFormat(e.target));
+    }
+    if (sellingPriceInput) {
+      sellingPriceInput.addEventListener('input', (e) => this.formatPriceInput(e.target));
+      sellingPriceInput.addEventListener('blur', (e) => this.finalizePriceFormat(e.target));
+    }
+  }
+
+  removeEventListeners() {
+    // Clean up any specific event listeners if needed
+    const form = document.getElementById('product-form');
+    if (form) {
+      form.removeEventListener('submit', this.handleFormSubmit);
+    }
+  }
+
+  setupPriceHandling() {
+    // Format existing price values on load
+    const purchasePriceInput = document.getElementById('purchase_price_input');
+    const sellingPriceInput = document.getElementById('selling_price_input');
+    
+    // If we have existing values in cents, convert to rupees for display
+    if (purchasePriceInput && purchasePriceInput.dataset.centsValue) {
+      const rupeesValue = (parseInt(purchasePriceInput.dataset.centsValue) / 100).toFixed(2);
+      purchasePriceInput.value = rupeesValue;
+    }
+    if (sellingPriceInput && sellingPriceInput.dataset.centsValue) {
+      const rupeesValue = (parseInt(sellingPriceInput.dataset.centsValue) / 100).toFixed(2);
+      sellingPriceInput.value = rupeesValue;
+    }
+    
+    // Format any existing values
+    if (purchasePriceInput && purchasePriceInput.value) {
+      this.finalizePriceFormat(purchasePriceInput);
+    }
+    if (sellingPriceInput && sellingPriceInput.value) {
+      this.finalizePriceFormat(sellingPriceInput);
+    }
+  }
+
+  formatPriceInput(input) {
+    // Allow only numbers and one decimal point
+    let value = input.value.replace(/[^\d.]/g, '');
+    
+    // Ensure only one decimal point
+    const decimalCount = (value.match(/\./g) || []).length;
+    if (decimalCount > 1) {
+      value = value.substring(0, value.lastIndexOf('.'));
+    }
+    
+    // Limit to 2 decimal places
+    if (value.includes('.')) {
+      const parts = value.split('.');
+      if (parts[1].length > 2) {
+        value = parts[0] + '.' + parts[1].substring(0, 2);
+      }
+    }
+    
+    input.value = value;
+  }
+
+  finalizePriceFormat(input) {
+    if (input.value && !isNaN(parseFloat(input.value))) {
+      // Format to exactly 2 decimal places
+      const formattedValue = parseFloat(input.value).toFixed(2);
+      if (formattedValue !== input.value) {
+        input.value = formattedValue;
+      }
+    } else if (input.value === '') {
+      input.value = '0.00';
+    }
+  }
+
+  convertToCents(rupeesValue) {
+    if (!rupeesValue || isNaN(parseFloat(rupeesValue))) return 0;
+    return Math.round(parseFloat(rupeesValue) * 100);
+  }
+
+  handleFormSubmit(e) {
+    const submitBtn = document.getElementById('submit_btn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Saving...';
+    }
+
+    // Convert rupees to cents before submission
+    const purchasePriceInput = document.getElementById('purchase_price_input');
+    const sellingPriceInput = document.getElementById('selling_price_input');
+    const purchasePriceCents = document.getElementById('purchase_price_cents');
+    const sellingPriceCents = document.getElementById('selling_price_cents');
+
+    if (purchasePriceInput && purchasePriceCents) {
+      purchasePriceCents.value = this.convertToCents(purchasePriceInput.value);
+    }
+    if (sellingPriceInput && sellingPriceCents) {
+      sellingPriceCents.value = this.convertToCents(sellingPriceInput.value);
+    }
+
+    // Validate prices before submission
+    if (sellingPriceInput && sellingPriceInput.value) {
+      const price = parseFloat(sellingPriceInput.value);
+      if (price <= 0) {
+        this.showToast('Please enter a valid selling price', 'error');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '💾 Save Product';
+        }
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // Validate purchase price
+    if (purchasePriceInput && purchasePriceInput.value) {
+      const price = parseFloat(purchasePriceInput.value);
+      if (price < 0) {
+        this.showToast('Purchase price cannot be negative', 'error');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '💾 Save Product';
+        }
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // Continue with form submission
+    setTimeout(() => {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '💾 Save Product';
+      }
+    }, 3000);
+  }
+
   setupBarcodeValidation() {
     const barcodeField = document.getElementById('product_barcode');
     if (barcodeField) {
@@ -504,6 +698,7 @@ class ProductForm {
       }
     }
   }
+
   setupFormEnhancements() {
     const barcodeField = document.getElementById('product_barcode');
     const nameField = document.getElementById('product_name');
@@ -515,6 +710,7 @@ class ProductForm {
       });
     }
   }
+
   validateBarcode(barcode) {
     const statusIcon = document.getElementById('barcodeStatusIcon');
     const statusText = document.getElementById('barcodeStatusText');
@@ -534,6 +730,7 @@ class ProductForm {
       return false;
     }
   }
+
   async openScanner() {
     if (this.isScanning) return;
     const scannerSection = document.getElementById('scannerSection');
@@ -572,6 +769,7 @@ class ProductForm {
       this.handleScannerError(error);
     }
   }
+
   handleScannerError(error) {
     const scannerStatus = document.getElementById('scannerStatus');
     let message = 'Camera error. ';
@@ -591,6 +789,7 @@ class ProductForm {
     this.showToast(message, 'error');
     setTimeout(() => { this.closeScanner(); }, 3000);
   }
+
   onScanSuccess(decodedText, decodedResult) {
     // Prevent duplicate scans
     if (this.scanCooldown) return;
@@ -625,12 +824,14 @@ class ProductForm {
       if (nameField) { nameField.focus(); }
     }, 1000);
   }
+
   async switchCamera() {
     if (!this.isScanning) return;
     this.isBackCamera = !this.isBackCamera;
     await this.closeScanner();
     setTimeout(() => { this.openScanner(); }, 300);
   }
+
   async closeScanner() {
     if (this.scanner) {
       try { await this.scanner.stop(); this.scanner.clear(); } catch (error) {}
@@ -642,6 +843,7 @@ class ProductForm {
     this.scanCooldown = false;
     this.lastScannedCode = null;
   }
+
   playBeep() {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -656,6 +858,7 @@ class ProductForm {
       oscillator.stop(audioContext.currentTime + 0.1);
     } catch (error) {}
   }
+
   showToast(message, type = 'info') {
     const existingToasts = document.querySelectorAll('.toast');
     existingToasts.forEach(toast => toast.remove());
@@ -672,29 +875,85 @@ class ProductForm {
     }, 3000);
   }
 }
+
 function clearForm() {
   if (confirm('Clear all fields?')) {
     document.getElementById('product-form').reset();
-    productForm.validateBarcode('');
-    productForm.showToast('Form cleared', 'info');
+    if (window.productForm) {
+      window.productForm.validateBarcode('');
+    }
+    showToast('Form cleared', 'info');
   }
 }
-let productForm;
+
+function showToast(message, type = 'info') {
+  const existingToasts = document.querySelectorAll('.toast');
+  existingToasts.forEach(toast => toast.remove());
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translate(-50%, -100px)';
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 3000);
+}
+
+// Global initialization with proper lifecycle management
+function initializeProductForm() {
+  // Clean up existing instance
+  if (window.productForm && typeof window.productForm.destroy === 'function') {
+    window.productForm.destroy();
+  }
+  
+  // Initialize new instance
+  window.productForm = new ProductForm();
+}
+
+// Multiple event listeners for different scenarios
+document.addEventListener('DOMContentLoaded', initializeProductForm);
+document.addEventListener('turbo:load', initializeProductForm);
+document.addEventListener('turbolinks:load', initializeProductForm);
+
+// Handle page visibility and navigation
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && window.location.pathname.includes('/products/new')) {
+    setTimeout(initializeProductForm, 50);
+  }
+});
+
+window.addEventListener('pageshow', function(event) {
+  if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+    setTimeout(initializeProductForm, 100);
+  }
+});
+
+// Initialize immediately if needed
+if (document.readyState !== 'loading') {
+  setTimeout(initializeProductForm, 0);
+}
+
+// Auto-focus barcode field on load
 document.addEventListener('DOMContentLoaded', function() {
-  productForm = new ProductForm();
   const barcodeField = document.getElementById('product_barcode');
   if (barcodeField && !barcodeField.value) {
     setTimeout(() => barcodeField.focus(), 500);
   }
 });
+
+// Scanner cleanup on page hide/unload
 document.addEventListener('visibilitychange', function() {
-  if (document.hidden && productForm && productForm.isScanning) {
-    productForm.closeScanner();
+  if (document.hidden && window.productForm && window.productForm.isScanning) {
+    window.productForm.closeScanner();
   }
 });
+
 window.addEventListener('beforeunload', function(e) {
-  if (productForm && productForm.isScanning) {
-    productForm.closeScanner();
+  if (window.productForm && window.productForm.isScanning) {
+    window.productForm.closeScanner();
   }
 });
 </script>

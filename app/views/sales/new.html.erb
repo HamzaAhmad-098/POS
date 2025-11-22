@@ -949,6 +949,21 @@ window.addEventListener('beforeunload', function() {
     saleForm.closeScanner();
   }
 });
+// Add this at the end of your script to handle page navigation
+document.addEventListener('DOMContentLoaded', function() {
+  // Re-initialize event listeners if page was loaded via Turbolinks/back button
+  if (window.saleForm) {
+    window.saleForm.setupEventListeners();
+  }
+});
+
+// Handle page visibility changes (for mobile devices)
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && window.saleForm) {
+    // Page became visible again, refresh the UI
+    window.saleForm.updateUI();
+  }
+});
 </script>
 </body>
 </html>
