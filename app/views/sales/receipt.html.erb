@@ -9,7 +9,7 @@
 
     <div class="receipt-info">
       <p><strong>Invoice #:</strong> <%= @sale.invoice_no %></p>
-      <p><strong>Date:</strong> <%= @sale.created_at.strftime("%d/%m/%Y %I:%M %p") %></p>
+      <p><strong>Date:</strong> <%= @sale.created_at.localtime.strftime("%d/%m/%Y %I:%M %p") %></p>
       <p><strong>Cashier:</strong> <%= @sale.user.full_name %></p>
       <% if @sale.customer %>
         <p><strong>Customer:</strong> <%= @sale.customer.name %></p>
@@ -64,7 +64,7 @@
 
     <div class="receipt-footer">
       <p><strong>Payment Method:</strong> <%= @sale.payment_method.to_s.humanize %></p>
-      <p class="thank-you">Thank you for your business!</p>
+      <p class="thank-you">Thank you for your Shopping!</p>
     </div>
   </div>
 

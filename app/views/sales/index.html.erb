@@ -49,7 +49,7 @@
               <div class="sale-header">
                 <div class="sale-info">
                   <h4>Invoice #<%= sale.invoice_no %></h4>
-                  <p class="sale-date"><%= sale.created_at.strftime("%d/%m/%Y %I:%M %p") %></p>
+                <p class="sale-date"><%= sale.created_at.localtime.strftime("%d/%m/%Y %I:%M %p") %></p>
                 </div>
                 <div class="sale-amount">
                   <span class="amount">Rs. <%= sale.total_amount %></span>
