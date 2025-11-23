@@ -425,7 +425,7 @@
             <div class="form-group">
               <%= form.label :purchase_price_cents, "Cost Price (Rs) *" %>
               <div class="rupee-input-group">
-                <span class="rupee-symbol">₹</span>
+                <span class="rupee-symbol"></span>
                 <%= form.number_field :purchase_price_cents, 
                       step: 1,
                       min: 0,
@@ -439,7 +439,7 @@
             <div class="form-group">
               <%= form.label :selling_price_cents, "Selling Price (Rs) *" %>
               <div class="rupee-input-group">
-                <span class="rupee-symbol">₹</span>
+                <span class="rupee-symbol"></span>
                 <%= form.number_field :selling_price_cents, 
                       step: 1,
                       min: 0,
