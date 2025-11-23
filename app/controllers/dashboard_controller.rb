@@ -11,4 +11,5 @@ class DashboardController < ApplicationController
       redirect_to login_path, alert: "No shop associated with your account."
     end
   end
+  
 end

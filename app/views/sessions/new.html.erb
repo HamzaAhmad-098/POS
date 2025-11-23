@@ -1,32 +1,482 @@
-# app/views/sessions/new.html.erb
-<div class="login-container">
-  <h2>POS System Login</h2>
+<!-- app/views/sessions/new.html.erb -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS System Login</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <% if flash[:alert] %>
-    <div class="alert alert-error">
-      <%= flash[:alert] %>
+  <style>
+    :root {
+      --primary: #4a6cf7;
+      --primary-dark: #3b57d9;
+      --primary-light: #eef2ff;
+      --secondary: #6c757d;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text-dark: #2d2d2d;
+      --text-light: #6c757d;
+      --radius: 14px;
+      --shadow: 0 4px 10px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      line-height: 1.6;
+      color: var(--text-dark);
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 440px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-container {
+      width: 100%;
+      background: var(--card);
+      padding: 35px 30px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--success));
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 15px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.8rem;
+      box-shadow: var(--shadow);
+    }
+
+    h2 {
+      color: var(--primary);
+      margin-bottom: 8px;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .login-subtitle {
+      color: var(--text-light);
+      font-size: 0.95rem;
+    }
+
+    .alert {
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.5s ease-out;
+      transform-origin: top;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert-error { 
+      background: #fee2e2; 
+      color: var(--danger); 
+      border-left: 4px solid var(--danger);
+    }
+
+    .alert-success { 
+      background: #d1fae5; 
+      color: var(--success); 
+      border-left: 4px solid var(--success);
+    }
+
+    .alert i {
+      font-size: 1.2rem;
+    }
+
+    .field {
+      margin-bottom: 22px;
+      position: relative;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-dark);
+      transition: var(--transition);
+    }
+
+    .field input {
+      width: 100%;
+      padding: 15px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      transition: var(--transition);
+      background: var(--card);
+    }
+
+    .field input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .field input:valid {
+      border-color: #cbd5e0;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 15px;
+      top: 42px;
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    .password-toggle:hover {
+      color: var(--primary);
+    }
+
+    .form-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 20px 0 25px;
+      font-size: 0.9rem;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .remember-me input {
+      width: auto;
+      transform: scale(1.1);
+    }
+
+    .forgot-password {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+
+    .forgot-password:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
+
+    .actions {
+      margin-top: 10px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 6px rgba(74, 108, 247, 0.2);
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(74, 108, 247, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(-1px);
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .powered-by {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .system-info {
+      background: var(--primary-light);
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      margin-top: 25px;
+      font-size: 0.85rem;
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .system-info i {
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      .login-container {
+        padding: 30px 25px;
+      }
+      
+      h2 {
+        font-size: 1.6rem;
+      }
+      
+      .logo {
+        width: 65px;
+        height: 65px;
+        font-size: 1.6rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 15px;
+      }
+      
+      .login-container {
+        padding: 25px 20px;
+      }
+      
+      h2 {
+        font-size: 1.5rem;
+      }
+      
+      .field input {
+        padding: 14px 15px;
+        font-size: 0.95rem;
+      }
+      
+      .btn {
+        padding: 14px;
+        font-size: 0.95rem;
+      }
+      
+      .form-options {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+      }
+      
+      .forgot-password {
+        align-self: flex-end;
+      }
+    }
+
+    /* Loading animation for button */
+    .btn-loading {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .btn-loading .btn-text {
+      display: none;
+    }
+
+    .btn-loading::after {
+      content: "";
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid #ffffff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-wrapper">
+    <div class="login-container">
+      <div class="login-header">
+        <div class="logo">
+          <i class="fas fa-cash-register"></i>
+        </div>
+        <h2>POS System Login</h2>
+        <p class="login-subtitle">Enter your credentials to access the dashboard</p>
+      </div>
+      
+      <% if flash[:alert] %>
+        <div class="alert alert-error">
+          <i class="fas fa-exclamation-circle"></i>
+          <%= flash[:alert] %>
+        </div>
+      <% end %>
+
+      <% if flash[:notice] %>
+        <div class="alert alert-success">
+          <i class="fas fa-check-circle"></i>
+          <%= flash[:notice] %>
+        </div>
+      <% end %>
+
+      <%= form_with url: login_path, local: true, id: "loginForm" do |form| %>
+        <div class="field">
+          <%= form.label :email, "Email Address" %>
+          <%= form.email_field :email, required: true, value: params[:email], placeholder: "Enter your email", autocomplete: "email" %>
+        </div>
+
+        <div class="field">
+          <%= form.label :password %>
+          <%= form.password_field :password, required: true, placeholder: "Enter your password", autocomplete: "current-password", id: "passwordField" %>
+          <button type="button" class="password-toggle" id="passwordToggle">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+
+        <div class="form-options">
+          <div class="remember-me">
+            <%= form.check_box :remember_me %>
+            <%= form.label :remember_me, "Remember me" %>
+          </div>
+        </div>
+
+        <div class="actions">
+          <%= form.submit "Login", class: "btn", id: "loginButton", data: { disable_with: "Logging in..." } %>
+        </div>
+      <% end %>
+
+      <div class="system-info">
+        <i class="fas fa-info-circle"></i>
+        <div>
+          <strong>System Status:</strong> All systems operational
+        </div>
+      </div>
+
+      <div class="login-footer">
+        <p>Powered by <span class="powered-by">Hamzax Developers</span></p>
+        <p>POS System v0.0.1</p>
+      </div>
     </div>
-  <% end %>
-  
-  <% if flash[:notice] %>
-    <div class="alert alert-success">
-      <%= flash[:notice] %>
-    </div>
-  <% end %>
-  
-  <%= form_with url: login_path, local: true do |form| %>
-    <div class="field">
-      <%= form.label :email %>
-      <%= form.email_field :email, required: true, value: params[:email] %>
-    </div>
-    
-    <div class="field">
-      <%= form.label :password %>
-      <%= form.password_field :password, required: true %>
-    </div>
-    
-    <div class="actions">
-      <%= form.submit "Login", class: "btn btn-primary" %>
-    </div>
-  <% end %>
-</div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginForm = document.getElementById('loginForm');
+      const passwordField = document.getElementById('passwordField');
+      const passwordToggle = document.getElementById('passwordToggle');
+      const loginButton = document.getElementById('loginButton');
+      
+      // Password visibility toggle
+      passwordToggle.addEventListener('click', function() {
+        const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordField.setAttribute('type', type);
+        
+        // Toggle eye icon
+        const icon = this.querySelector('i');
+        if (type === 'text') {
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+        } else {
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+        }
+      });
+      
+      // Form submission animation
+      loginForm.addEventListener('submit', function() {
+        // Add loading state to button
+        loginButton.classList.add('btn-loading');
+        
+        // In a real application, the form would submit normally
+        // This is just for visual feedback
+        setTimeout(() => {
+          loginButton.classList.remove('btn-loading');
+        }, 2000);
+      });
+      
+      // Input focus effects
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+          this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+          this.parentElement.classList.remove('focused');
+        });
+      });
+      
+      // Auto-focus email field
+      document.querySelector('input[type="email"]').focus();
+    });
+  </script>
+</body>
+</html>
