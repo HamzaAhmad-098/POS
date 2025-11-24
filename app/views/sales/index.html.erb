@@ -77,12 +77,6 @@
                 <%= link_to receipt_sale_path(sale), class: "btn-action receipt-btn" do %>
                   🧾 Receipt
                 <% end %>
-                <%= link_to sale_path(sale), 
-                      method: :delete, 
-                      data: { confirm: "Are you sure you want to delete this sale?" }, 
-                      class: "btn-action delete-btn" do %>
-                  🗑️ Delete
-                <% end %>
               </div>
             </div>
           <% end %>
