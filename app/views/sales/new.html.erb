@@ -879,15 +879,18 @@ class SaleForm {
     const scannerStatus = document.getElementById('scannerStatus');
     scannerStatus.textContent = '✅ Barcode Scanned!';
     scannerStatus.style.color = '#28a745';
-    this.playBeep();
+    
     // Add product to cart if found
     fetch(`/products?barcode=${encodeURIComponent(cleanBarcode)}&format=json`)
       .then(res=>res.json())
       .then(products=>{
         if (products.length > 0) {
+          // Product found and added to cart - play beep
+          this.playBeep();
           this.addToCart(products[0]);
           scannerStatus.textContent = '✓ Product added: ' + products[0].name;
         } else {
+          // Product not found - no beep
           scannerStatus.textContent = `Product not found for barcode: `+cleanBarcode;
           setTimeout(()=>{
             if (this.isScanning) scannerStatus.textContent = '✓ Camera ready - Point at barcode';
@@ -896,6 +899,7 @@ class SaleForm {
         setTimeout(()=>{this.closeScanner();},900);
       })
       .catch(()=>{
+        // Error occurred - no beep
         scannerStatus.textContent = 'Error searching for product';
         setTimeout(()=>{this.closeScanner();},900);
       });
