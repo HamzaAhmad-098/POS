@@ -104,6 +104,32 @@
   </div>
 </div>
 
+
+<!-- 🔥 FIX: Make Rails data available to JavaScript -->
+<script>
+const receiptData = <%= {
+  shop_name: Current.shop.name,
+  shop_address: Current.shop.address,
+  shop_phone: Current.shop.phone,
+  invoice_no: @sale.invoice_no,
+  date: @sale.created_at.localtime.strftime("%d/%m/%Y %I:%M %p"),
+  cashier: @sale.user.full_name,
+  customer: (@sale.customer&.name || ""),
+  items: @sale.sale_items.map { |i|
+    { name: i.product.name, qty: i.qty, unit_price: i.unit_price, total_price: i.total_price }
+  },
+  subtotal: @sale.subtotal_amount,
+  discount: @sale.discount_amount,
+  has_discount: @sale.discount_cents > 0,
+  tax: @sale.tax_amount,
+  has_tax: @sale.tax_cents > 0,
+  total: @sale.total_amount,
+  payment_method: @sale.payment_method.to_s.humanize
+}.to_json.html_safe %>;
+</script>
+
+
+
 <style>
 .receipt-container {
   max-width: 400px;
@@ -259,13 +285,17 @@
 }
 </style>
 
+
+
+<!-- ------------------ JAVASCRIPT ---------------------- -->
+
 <script>
 function sendWhatsAppReceipt() {
   const phoneInput = document.getElementById('whatsappNumber');
   const statusDiv = document.getElementById('whatsappStatus');
   const phoneNumber = phoneInput.value.trim();
 
-  // Validate phone number (Pakistani format)
+  // Validate phone number (Pakistani)
   const phoneRegex = /^[0-9]{11}$/;
   if (!phoneRegex.test(phoneNumber)) {
     statusDiv.textContent = '❌ Please enter a valid 11-digit phone number';
@@ -274,67 +304,66 @@ function sendWhatsAppReceipt() {
     return;
   }
 
-  // Format number for WhatsApp (remove leading 0 and add country code)
+  // Convert 0300xxxxxxx → 92300xxxxxxx
   const formattedNumber = '92' + phoneNumber.substring(1);
-  
-  // Create receipt message
+
+  // Create WhatsApp message
   const receiptMessage = createReceiptMessage();
-  
-  // Encode message for URL
+
+  // Encode for URL
   const encodedMessage = encodeURIComponent(receiptMessage);
-  
-  // Create WhatsApp URL
+
+  // Open WhatsApp
   const whatsappUrl = `https://wa.me/${formattedNumber}?text=${encodedMessage}`;
-  
-  // Open WhatsApp in new tab
   window.open(whatsappUrl, '_blank');
-  
-  // Show success message
-  statusDiv.textContent = '✅ WhatsApp opened with receipt. Please click send to share.';
+
+  // Success message
+  statusDiv.textContent = '✅ WhatsApp opened with receipt. Click send.';
   statusDiv.className = 'whatsapp-status success';
   statusDiv.style.display = 'block';
-  
-  // Clear input after successful send
+
   phoneInput.value = '';
-  
-  // Hide status message after 5 seconds
+
   setTimeout(() => {
     statusDiv.style.display = 'none';
   }, 5000);
 }
 
+
+
 function createReceiptMessage() {
-  // Create a text version of the receipt
   return `
-*${Current.shop.name}*
-${Current.shop.address}
-Phone: ${Current.shop.phone}
+*${receiptData.shop_name}*
+${receiptData.shop_address}
+Phone: ${receiptData.shop_phone}
 
 *INVOICE RECEIPT*
 
-Invoice #: ${@sale.invoice_no}
-Date: ${@sale.created_at.localtime.strftime("%d/%m/%Y %I:%M %p")}
-Cashier: ${@sale.user.full_name}
-${@sale.customer ? `Customer: ${@sale.customer.name}` : ''}
+Invoice #: ${receiptData.invoice_no}
+Date: ${receiptData.date}
+Cashier: ${receiptData.cashier}
+${receiptData.customer ? `Customer: ${receiptData.customer}` : ''}
 
 *ITEMS*
-${@sale.sale_items.map(item => 
-  `${item.product.name} - ${item.qty} x Rs. ${item.unit_price} = Rs. ${item.total_price}`
+${receiptData.items.map(item =>
+  `${item.name} - ${item.qty} x Rs. ${item.unit_price} = Rs. ${item.total_price}`
 ).join('\n')}
 
 *TOTALS*
-Subtotal: Rs. ${@sale.subtotal_amount}
-${@sale.discount_cents > 0 ? `Discount: -Rs. ${@sale.discount_amount}\n` : ''}
-${@sale.tax_cents > 0 ? `Tax: Rs. ${@sale.tax_amount}\n` : ''}
-*GRAND TOTAL: Rs. ${@sale.total_amount}*
+Subtotal: Rs. ${receiptData.subtotal}
+${receiptData.has_discount ? `Discount: -Rs. ${receiptData.discount}\n` : ''}
+${receiptData.has_tax ? `Tax: Rs. ${receiptData.tax}\n` : ''}
+*GRAND TOTAL: Rs. ${receiptData.total}*
 
-Payment Method: ${@sale.payment_method.to_s.humanize}
+Payment Method: ${receiptData.payment_method}
 
 Thank you for your shopping! 🛍️
-  `.trim();
+`.trim();
 }
 
-// Add enter key support for phone input
+
+
+// Enter key support
 document.getElementById('whatsappNumber').addEventListener('keypress', function(e) {
   if (e.key === 'Enter') {
     sendWhatsAppReceipt();
