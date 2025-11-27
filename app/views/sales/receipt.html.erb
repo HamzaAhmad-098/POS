@@ -73,6 +73,35 @@
     <%= link_to "🛒 New Sale", new_sale_path, class: "btn btn-success" %>
     <%= link_to "📊 View All Sales", sales_path, class: "btn btn-outline" %>
   </div>
+
+  <!-- WhatsApp Share Section -->
+  <div class="whatsapp-section mt-4">
+    <div class="whatsapp-box">
+      <h4>📱 Send Receipt via WhatsApp</h4>
+      <p class="whatsapp-hint">Enter customer's WhatsApp number to send this receipt</p>
+      
+      <div class="whatsapp-form">
+        <div class="input-group">
+          <input 
+            type="tel" 
+            id="whatsappNumber" 
+            class="form-control" 
+            placeholder="e.g., 03001234567" 
+            pattern="[0-9]{11}"
+            maxlength="11"
+          >
+          <button class="btn btn-whatsapp" onclick="sendWhatsAppReceipt()">
+            📤 Send
+          </button>
+        </div>
+        <small class="form-text text-muted">
+          Enter 11-digit Pakistani number without country code (e.g., 03001234567)
+        </small>
+      </div>
+
+      <div id="whatsappStatus" class="whatsapp-status" style="display: none;"></div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -149,8 +178,77 @@
   margin-top: 10px;
 }
 
+/* WhatsApp Section Styles */
+.whatsapp-box {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.whatsapp-box h4 {
+  color: #25D366;
+  margin-bottom: 8px;
+}
+
+.whatsapp-hint {
+  color: #6c757d;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.whatsapp-form .input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.whatsapp-form .form-control {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.btn-whatsapp {
+  background: #25D366;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-whatsapp:hover {
+  background: #128C7E;
+}
+
+.whatsapp-status {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.whatsapp-status.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.whatsapp-status.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
 @media print {
-  .receipt-actions {
+  .receipt-actions,
+  .whatsapp-section {
     display: none;
   }
   
@@ -160,3 +258,86 @@
   }
 }
 </style>
+
+<script>
+function sendWhatsAppReceipt() {
+  const phoneInput = document.getElementById('whatsappNumber');
+  const statusDiv = document.getElementById('whatsappStatus');
+  const phoneNumber = phoneInput.value.trim();
+
+  // Validate phone number (Pakistani format)
+  const phoneRegex = /^[0-9]{11}$/;
+  if (!phoneRegex.test(phoneNumber)) {
+    statusDiv.textContent = '❌ Please enter a valid 11-digit phone number';
+    statusDiv.className = 'whatsapp-status error';
+    statusDiv.style.display = 'block';
+    return;
+  }
+
+  // Format number for WhatsApp (remove leading 0 and add country code)
+  const formattedNumber = '92' + phoneNumber.substring(1);
+  
+  // Create receipt message
+  const receiptMessage = createReceiptMessage();
+  
+  // Encode message for URL
+  const encodedMessage = encodeURIComponent(receiptMessage);
+  
+  // Create WhatsApp URL
+  const whatsappUrl = `https://wa.me/${formattedNumber}?text=${encodedMessage}`;
+  
+  // Open WhatsApp in new tab
+  window.open(whatsappUrl, '_blank');
+  
+  // Show success message
+  statusDiv.textContent = '✅ WhatsApp opened with receipt. Please click send to share.';
+  statusDiv.className = 'whatsapp-status success';
+  statusDiv.style.display = 'block';
+  
+  // Clear input after successful send
+  phoneInput.value = '';
+  
+  // Hide status message after 5 seconds
+  setTimeout(() => {
+    statusDiv.style.display = 'none';
+  }, 5000);
+}
+
+function createReceiptMessage() {
+  // Create a text version of the receipt
+  return `
+*${Current.shop.name}*
+${Current.shop.address}
+Phone: ${Current.shop.phone}
+
+*INVOICE RECEIPT*
+
+Invoice #: ${@sale.invoice_no}
+Date: ${@sale.created_at.localtime.strftime("%d/%m/%Y %I:%M %p")}
+Cashier: ${@sale.user.full_name}
+${@sale.customer ? `Customer: ${@sale.customer.name}` : ''}
+
+*ITEMS*
+${@sale.sale_items.map(item => 
+  `${item.product.name} - ${item.qty} x Rs. ${item.unit_price} = Rs. ${item.total_price}`
+).join('\n')}
+
+*TOTALS*
+Subtotal: Rs. ${@sale.subtotal_amount}
+${@sale.discount_cents > 0 ? `Discount: -Rs. ${@sale.discount_amount}\n` : ''}
+${@sale.tax_cents > 0 ? `Tax: Rs. ${@sale.tax_amount}\n` : ''}
+*GRAND TOTAL: Rs. ${@sale.total_amount}*
+
+Payment Method: ${@sale.payment_method.to_s.humanize}
+
+Thank you for your shopping! 🛍️
+  `.trim();
+}
+
+// Add enter key support for phone input
+document.getElementById('whatsappNumber').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    sendWhatsAppReceipt();
+  }
+});
+</script>
