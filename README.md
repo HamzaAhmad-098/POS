@@ -1,4 +1,4 @@
-<img width="862" height="1028" alt="image" src="https://github.com/user-attachments/assets/6a24b919-8604-48e7-9b85-5311056afaef" />
+
 
 # CloudKartPOS
 
