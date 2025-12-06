@@ -123,7 +123,6 @@ MIT License © 2025 Hamza Ahmad
 # 📫 Contact
 - I'm open to internships , remote jobs , freelance projects, or tech collaboration.
 - Hamza Ahmad
-🔗 GitHub: HamzaAhmad-098
 - 📧 Email: [HamzaxDevelopers](mailto:hamzaxdevelopers1223@gmail.com)
 - 🌐 Portfolio: [https://portfolio.hamzaxdevelopers.dpdns.org](https://portfolio.hamzaxdevelopers.dpdns.org) 
 
