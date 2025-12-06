@@ -1,3 +1,6 @@
+<img width="1727" height="1008" alt="image" src="https://github.com/user-attachments/assets/727d4220-c170-4185-bd21-e98530e535d5" />
+<img width="904" height="1031" alt="image" src="https://github.com/user-attachments/assets/3546b113-62ca-43ba-b031-73921f5ec070" />
+
 # CloudKartPOS
 
 **CloudKartPOS** is a modern, cloud-ready **Point of Sale (POS) system** built with **Ruby on Rails**.  
