@@ -9,14 +9,14 @@ Designed for **retail shops, pharmacies, cafés, restaurants, and small business
 
 ## **Why CloudKartPOS?**
 
-- Multi-shop support — each shop has its own database  
-- Roles & permissions — Admin, Owner, Cashier  
+- Multi-shop support -> each shop has its own database  
+- Roles & permissions —> Admin, Owner, Cashier  
 - Fast billing with barcode scanning  
 - Real-time inventory & stock tracking  
 - Customer management & purchase history  
 - Flexible subscription plans  
 - Audit logs for complete accountability  
-- Cloud-ready — deployable on Heroku, Render, Railway, or any VPS  
+- Cloud-ready -> deployable on Heroku, Render, Railway, or any VPS  
 - Optional restaurant/café mode (table management & kitchen orders)  
 
 ---
@@ -38,7 +38,7 @@ Designed for **retail shops, pharmacies, cafés, restaurants, and small business
 
 ## **Technologies Used**
 
-- **Ruby on Rails 8.x**  
+- **Ruby on Rails 8.0.4**  
 - **PostgreSQL**  
 - **Active Storage** (for file uploads)  
 - **Bootstrap / Tailwind CSS** (UI)  
@@ -52,7 +52,7 @@ Designed for **retail shops, pharmacies, cafés, restaurants, and small business
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/CloudKartPOS.git
+git clone https://github.com/HamzaAhmad-098/CloudKartPOS.git
 cd CloudKartPOS
 ````
 
@@ -79,10 +79,9 @@ rails server
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser to access the app.
 
-**Admin Credentials (Seeded):**
+**Test Credentials(For live link demo):**
 
-* Email: `admin@example.com`
-* Phone: `0000000000`
+* Email: `test@example.com`
 * Password: `password123`
 
 ---
@@ -116,11 +115,13 @@ MIT License © 2025 Hamza Ahmad
 
 ---
 
-## **Contact**
+# 📫 Contact
+- I'm open to internships , remote jobs , freelance projects, or tech collaboration.
+- Hamza Ahmad
+🔗 GitHub: HamzaAhmad-098
+- 📧 Email: [HamzaxDevelopers](mailto:hamzaxdevelopers1223@gmail.com)
+- 🌐 Portfolio: [https://portfolio.hamzaxdevelopers.dpdns.org](https://portfolio.hamzaxdevelopers.dpdns.org) 
 
-* Email: [hamza@example.com](mailto:hamza@example.com)
-* LinkedIn: [https://www.linkedin.com/in/hamzaahmad](https://www.linkedin.com/in/hamzaahmad)
-* GitHub: [https://github.com/yourusername/CloudKartPOS](https://github.com/yourusername/CloudKartPOS)
-
----
+# ⭐️ Support
+If you like this project or learned something, please consider giving a ⭐️ on the repository!
 
