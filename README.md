@@ -1,5 +1,4 @@
-<img width="1727" height="1008" alt="image" src="https://github.com/user-attachments/assets/727d4220-c170-4185-bd21-e98530e535d5" />
-<img width="904" height="1031" alt="image" src="https://github.com/user-attachments/assets/3546b113-62ca-43ba-b031-73921f5ec070" />
+
 
 # CloudKartPOS
 
@@ -9,6 +8,8 @@ Designed for **retail shops, pharmacies, cafés, restaurants, and small business
 🌐 **Live Demo:** [https://possystem-b4c3728752c9.herokuapp.com/](https://possystem-b4c3728752c9.herokuapp.com/)
 
 ---
+<img width="1727" height="1008" alt="image" src="https://github.com/user-attachments/assets/727d4220-c170-4185-bd21-e98530e535d5" />
+<img width="1901" height="1038" alt="image" src="https://github.com/user-attachments/assets/59d1f5f2-53db-4e1a-9dd8-8599b831166d" />
 
 ## **Why CloudKartPOS?**
 
